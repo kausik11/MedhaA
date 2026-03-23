@@ -1,4 +1,5 @@
 import { useDeferredValue, useState } from "react";
+import { FiPlus } from "react-icons/fi";
 import { ProductCard } from "./ProductCard";
 
 export function ProductsPanel({
@@ -42,6 +43,7 @@ export function ProductsPanel({
         </div>
 
         <button type="button" className="primary-button" onClick={onOpenAddProduct}>
+          <FiPlus className="button-icon" />
           Add product
         </button>
       </div>

@@ -2,6 +2,7 @@ import { startTransition, useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
+import { ConfirmToast } from "./components/ConfirmToast";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { CategoriesPanel } from "./components/CategoriesPanel";
@@ -22,6 +23,7 @@ function App() {
   const [productsLoading, setProductsLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isProductSubmitting, setIsProductSubmitting] = useState(false);
@@ -35,6 +37,32 @@ function App() {
 
     toast.success(message);
   };
+
+  const confirmAction = ({ message, title }) =>
+    new Promise((resolve) => {
+      let confirmationToastId;
+
+      const handleClose = (confirmed) => {
+        toast.dismiss(confirmationToastId);
+        resolve(confirmed);
+      };
+
+      confirmationToastId = toast(
+        <ConfirmToast
+          title={title}
+          message={message}
+          onCancel={() => handleClose(false)}
+          onConfirm={() => handleClose(true)}
+        />,
+        {
+          autoClose: false,
+          closeButton: false,
+          closeOnClick: false,
+          draggable: false,
+          className: "confirmation-toast-wrapper",
+        }
+      );
+    });
 
   useEffect(() => {
     let isCancelled = false;
@@ -121,6 +149,15 @@ function App() {
   };
 
   const handleDeleteProduct = async (productId) => {
+    const confirmed = await confirmAction({
+      title: "Delete product?",
+      message: "This will permanently remove the product from the catalog.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await api.deleteProduct(productId);
       setProducts((current) => current.filter((product) => product._id !== productId));
@@ -169,6 +206,15 @@ function App() {
   };
 
   const handleDeleteCategory = async (categoryId) => {
+    const confirmed = await confirmAction({
+      title: "Delete category?",
+      message: "This will remove the category if no product is currently using it.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await api.deleteProductCategory(categoryId);
       setCategories((current) => current.filter((category) => category._id !== categoryId));
@@ -218,14 +264,22 @@ function App() {
   };
 
   return (
-    <div className="admin-shell">
-      <Sidebar activeView={activeView} onChangeView={handleViewChange} stats={stats} />
+    <div className={`admin-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+      <Sidebar
+        activeView={activeView}
+        isCollapsed={isSidebarCollapsed}
+        onChangeView={handleViewChange}
+        onToggleCollapse={() => setIsSidebarCollapsed((current) => !current)}
+        stats={stats}
+      />
 
       <div className="dashboard-column">
         <Header
           activeView={activeView}
           isRefreshing={isRefreshing}
+          isSidebarCollapsed={isSidebarCollapsed}
           onRefresh={handleRefresh}
+          onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
           stats={stats}
         />
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FiCheck, FiEdit2, FiPlus, FiTrash2, FiX } from "react-icons/fi";
 
 export function CategoriesPanel({
   categories,
@@ -68,6 +69,7 @@ export function CategoriesPanel({
           />
         </label>
         <button type="submit" className="primary-button" disabled={isSubmitting}>
+          <FiPlus className="button-icon" />
           Add category
         </button>
       </form>
@@ -108,6 +110,7 @@ export function CategoriesPanel({
                         disabled={isSubmitting}
                         onClick={() => handleSaveEdit(category._id)}
                       >
+                        <FiCheck className="button-icon" />
                         Save
                       </button>
                       <button
@@ -118,6 +121,7 @@ export function CategoriesPanel({
                           setEditingName("");
                         }}
                       >
+                        <FiX className="button-icon" />
                         Cancel
                       </button>
                     </>
@@ -131,6 +135,7 @@ export function CategoriesPanel({
                           setEditingName(category.name);
                         }}
                       >
+                        <FiEdit2 className="button-icon" />
                         Edit
                       </button>
                       <button
@@ -139,6 +144,7 @@ export function CategoriesPanel({
                         disabled={isSubmitting}
                         onClick={() => handleDelete(category._id)}
                       >
+                        <FiTrash2 className="button-icon" />
                         Delete
                       </button>
                     </>

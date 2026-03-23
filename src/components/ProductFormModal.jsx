@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FiSave, FiX } from "react-icons/fi";
 import { RichTextEditor } from "./RichTextEditor";
 
 const createInitialState = () => ({
@@ -255,6 +256,7 @@ export function ProductFormModal({
             </h3>
           </div>
           <button type="button" className="ghost-button" onClick={onClose}>
+            <FiX className="button-icon" />
             Close
           </button>
         </div>
@@ -595,9 +597,11 @@ export function ProductFormModal({
 
           <div className="modal-actions">
             <button type="button" className="ghost-button" onClick={onClose}>
+              <FiX className="button-icon" />
               Cancel
             </button>
             <button type="submit" className="primary-button" disabled={isSubmitting}>
+              <FiSave className="button-icon" />
               {isSubmitting ? "Saving..." : isEditMode ? "Update product" : "Create product"}
             </button>
           </div>

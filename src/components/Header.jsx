@@ -1,4 +1,13 @@
-export function Header({ activeView, isRefreshing, onRefresh, stats }) {
+import { FiMenu, FiRefreshCw } from "react-icons/fi";
+
+export function Header({
+  activeView,
+  isRefreshing,
+  isSidebarCollapsed,
+  onRefresh,
+  onToggleSidebar,
+  stats,
+}) {
   const title =
     activeView === "products" ? "Products workspace" : "Product categories workspace";
   const subtitle =
@@ -26,9 +35,16 @@ export function Header({ activeView, isRefreshing, onRefresh, stats }) {
           </div>
         </div>
 
-        <button type="button" className="ghost-button refresh-button" onClick={onRefresh}>
-          {isRefreshing ? "Refreshing..." : "Refresh"}
-        </button>
+        <div className="header-button-row">
+          <button type="button" className="ghost-button refresh-button" onClick={onToggleSidebar}>
+            <FiMenu className="button-icon" />
+            {isSidebarCollapsed ? "Expand menu" : "Collapse menu"}
+          </button>
+          <button type="button" className="ghost-button refresh-button" onClick={onRefresh}>
+            <FiRefreshCw className={`button-icon ${isRefreshing ? "spin-icon" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -1,3 +1,5 @@
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -89,6 +91,7 @@ export function ProductCard({ product, onDelete, onEdit }) {
 
         <div className="card-action-row">
           <button type="button" className="ghost-button" onClick={() => onEdit(product)}>
+            <FiEdit2 className="button-icon" />
             Edit
           </button>
           <button
@@ -96,6 +99,7 @@ export function ProductCard({ product, onDelete, onEdit }) {
             className="ghost-danger-button"
             onClick={() => onDelete(product._id)}
           >
+            <FiTrash2 className="button-icon" />
             Delete
           </button>
         </div>
