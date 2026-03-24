@@ -71,4 +71,30 @@ export const api = {
       method: "DELETE",
     });
   },
+  getOffers() {
+    return request("/offers");
+  },
+  createOffer(payload) {
+    return request("/offers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  updateOffer(offerId, payload) {
+    return request(`/offers/${offerId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  deleteOffer(offerId) {
+    return request(`/offers/${offerId}`, {
+      method: "DELETE",
+    });
+  },
 };

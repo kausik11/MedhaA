@@ -6,6 +6,7 @@ import { ConfirmToast } from "./components/ConfirmToast";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { CategoriesPanel } from "./components/CategoriesPanel";
+import { OffersPanel } from "./components/OffersPanel";
 import { ProductFormModal } from "./components/ProductFormModal";
 import { ProductsPanel } from "./components/ProductsPanel";
 import { Sidebar } from "./components/Sidebar";
@@ -14,16 +15,19 @@ import { api, getApiBaseUrl } from "./lib/api";
 const VIEWS = {
   products: "products",
   categories: "categories",
+  offers: "offers",
 };
 
 function App() {
   const [activeView, setActiveView] = useState(VIEWS.products);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [offersLoading, setOffersLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [refreshToken, setRefreshToken] = useState(0);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isProductSubmitting, setIsProductSubmitting] = useState(false);
@@ -73,14 +77,16 @@ function App() {
       if (isInitialLoad) {
         setProductsLoading(true);
         setCategoriesLoading(true);
+        setOffersLoading(true);
       } else {  
         setIsRefreshing(true);
       }
 
       try {
-        const [productsData, categoriesData] = await Promise.all([
+        const [productsData, categoriesData, offersData] = await Promise.all([
           api.getProducts(),
           api.getProductCategories(),
+          api.getOffers(),
         ]);
 
         if (isCancelled) {
@@ -89,6 +95,7 @@ function App() {
 
         setProducts(Array.isArray(productsData) ? productsData : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setOffers(Array.isArray(offersData) ? offersData : []);
       } catch (error) {
         if (!isCancelled) {
           showNotice("error", error.message || "Unable to refresh dashboard data.");
@@ -97,6 +104,7 @@ function App() {
         if (!isCancelled) {
           setProductsLoading(false);
           setCategoriesLoading(false);
+          setOffersLoading(false);
           setIsRefreshing(false);
         }
       }
@@ -233,6 +241,50 @@ function App() {
     }
   };
 
+  const handleCreateOffer = async (payload) => {
+    try {
+      const createdOffer = await api.createOffer(payload);
+      setOffers((current) => [createdOffer, ...current]);
+      showNotice("success", "Offer created successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to create offer.");
+      throw error;
+    }
+  };
+
+  const handleUpdateOffer = async (offerId, payload) => {
+    try {
+      const updatedOffer = await api.updateOffer(offerId, payload);
+      setOffers((current) =>
+        current.map((offer) => (offer._id === offerId ? updatedOffer : offer))
+      );
+      showNotice("success", "Offer updated successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update offer.");
+      throw error;
+    }
+  };
+
+  const handleDeleteOffer = async (offerId) => {
+    const confirmed = await confirmAction({
+      title: "Delete offer?",
+      message: "This will permanently remove the promo code from the backend.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.deleteOffer(offerId);
+      setOffers((current) => current.filter((offer) => offer._id !== offerId));
+      showNotice("success", "Offer deleted successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to delete offer.");
+      throw error;
+    }
+  };
+
   const handleViewChange = (nextView) => {
     startTransition(() => {
       setActiveView(nextView);
@@ -261,6 +313,7 @@ function App() {
   const stats = {
     products: products.length,
     categories: categories.length,
+    offers: offers.length,
   };
 
   return (
@@ -293,13 +346,21 @@ function App() {
               onEditProduct={handleOpenEditProduct}
               onOpenAddProduct={handleOpenCreateProduct}
             />
-          ) : (
+          ) : activeView === VIEWS.categories ? (
             <CategoriesPanel
               categories={categories}
               loading={categoriesLoading}
               onCreateCategory={handleCreateCategory}
               onDeleteCategory={handleDeleteCategory}
               onUpdateCategory={handleUpdateCategory}
+            />
+          ) : (
+            <OffersPanel
+              offers={offers}
+              loading={offersLoading}
+              onCreateOffer={handleCreateOffer}
+              onDeleteOffer={handleDeleteOffer}
+              onUpdateOffer={handleUpdateOffer}
             />
           )}
         </main>

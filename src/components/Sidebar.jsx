@@ -1,4 +1,4 @@
-import { FiBox, FiChevronLeft, FiChevronRight, FiGrid } from "react-icons/fi";
+import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiTag } from "react-icons/fi";
 
 const navItems = [
   {
@@ -15,6 +15,13 @@ const navItems = [
     description: "Maintain product categories used across the catalog.",
     icon: FiGrid,
   },
+  {
+    id: "offers",
+    label: "Offers",
+    eyebrow: "Checkout",
+    description: "Manage promo codes and percentage discounts for orders.",
+    icon: FiTag,
+  },
 ];
 
 export function Sidebar({
@@ -24,6 +31,12 @@ export function Sidebar({
   onToggleCollapse,
   stats,
 }) {
+  const getStatValue = (itemId) => {
+    if (itemId === "products") return stats.products;
+    if (itemId === "categories") return stats.categories;
+    return stats.offers;
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-top-row">
@@ -31,10 +44,7 @@ export function Sidebar({
           {!isCollapsed ? (
             <>
               <p className="eyebrow">Medha Botanics</p>
-              <h1>Admin panel</h1>
-              <p className="sidebar-copy">
-                Manage product categories and product inventory from one workspace.
-              </p>
+              <h1>Admin</h1>
             </>
           ) : (
             <div className="sidebar-mini-brand">MB</div>
@@ -69,37 +79,26 @@ export function Sidebar({
                     <ItemIcon className="sidebar-nav-icon" />
                   </span>
                   <span className="sidebar-stat sidebar-stat-compact">
-                    {item.id === "products" ? stats.products : stats.categories}
+                    {getStatValue(item.id)}
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="sidebar-link-top">
-                    <span className="eyebrow">{item.eyebrow}</span>
+                  <span className="sidebar-link-compact">
+                    <span className="sidebar-nav-icon-wrap">
+                      <ItemIcon className="sidebar-nav-icon" />
+                    </span>
+                    <strong>{item.label}</strong>
                     <span className="sidebar-stat">
-                      {item.id === "products" ? stats.products : stats.categories}
+                      {getStatValue(item.id)}
                     </span>
                   </span>
-                  <strong>{item.label}</strong>
-                  <span>{item.description}</span>
                 </>
               )}
             </button>
           );
         })}
       </nav>
-
-      {!isCollapsed ? (
-        <div className="sidebar-card">
-          <p className="eyebrow">API routes</p>
-          <p>
-            <code>/api/products</code>
-          </p>
-          <p>
-            <code>/api/product-categories</code>
-          </p>
-        </div>
-      ) : null}
     </aside>
   );
 }

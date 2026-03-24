@@ -8,12 +8,16 @@ export function Header({
   onToggleSidebar,
   stats,
 }) {
-  const title =
-    activeView === "products" ? "Products workspace" : "Product categories workspace";
-  const subtitle =
-    activeView === "products"
-      ? "Open the add-product modal, upload images, and review the live catalog below."
-      : "Add, rename, or remove categories used by the backend product routes.";
+  const title = activeView === "products"
+    ? "Products workspace"
+    : activeView === "categories"
+      ? "Product categories workspace"
+      : "Offers workspace";
+  const subtitle = activeView === "products"
+    ? "Open the add-product modal, upload images, and review the live catalog below."
+    : activeView === "categories"
+      ? "Add, rename, or remove categories used by the backend product routes."
+      : "Create promo codes, adjust discount percentages, and keep checkout incentives current.";
 
   return (
     <header className="dashboard-header">
@@ -32,6 +36,10 @@ export function Header({
           <div className="stat-pill">
             <span>Categories</span>
             <strong>{stats.categories}</strong>
+          </div>
+          <div className="stat-pill">
+            <span>Offers</span>
+            <strong>{stats.offers}</strong>
           </div>
         </div>
 
