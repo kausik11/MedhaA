@@ -12,12 +12,24 @@ export function Header({
     ? "Products workspace"
     : activeView === "categories"
       ? "Product categories workspace"
-      : "Offers workspace";
+      : activeView === "offers"
+        ? "Offers workspace"
+        : activeView === "addresses"
+          ? "Addresses workspace"
+          : activeView === "orderStatus"
+            ? "Order status workspace"
+            : "Orders workspace";
   const subtitle = activeView === "products"
     ? "Open the add-product modal, upload images, and review the live catalog below."
     : activeView === "categories"
       ? "Add, rename, or remove categories used by the backend product routes."
-      : "Create promo codes, adjust discount percentages, and keep checkout incentives current.";
+      : activeView === "offers"
+        ? "Create promo codes, adjust discount percentages, and keep checkout incentives current."
+        : activeView === "addresses"
+          ? "Review delivery addresses, update contact details, and keep shipping destinations organized."
+          : activeView === "orderStatus"
+            ? "Look up a single order by order ID and review the latest status history without opening the full orders workspace."
+            : "Review incoming orders, inspect totals, and push each order through the fulfillment pipeline.";
 
   return (
     <header className="dashboard-header">
@@ -40,6 +52,14 @@ export function Header({
           <div className="stat-pill">
             <span>Offers</span>
             <strong>{stats.offers}</strong>
+          </div>
+          <div className="stat-pill">
+            <span>Addresses</span>
+            <strong>{stats.addresses}</strong>
+          </div>
+          <div className="stat-pill">
+            <span>Orders</span>
+            <strong>{stats.orders}</strong>
           </div>
         </div>
 

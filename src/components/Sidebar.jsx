@@ -1,4 +1,4 @@
-import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiTag } from "react-icons/fi";
+import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiMapPin, FiPackage, FiSearch, FiTag } from "react-icons/fi";
 
 const navItems = [
   {
@@ -22,6 +22,27 @@ const navItems = [
     description: "Manage promo codes and percentage discounts for orders.",
     icon: FiTag,
   },
+  {
+    id: "addresses",
+    label: "Addresses",
+    eyebrow: "Delivery",
+    description: "Manage delivery addresses used across orders.",
+    icon: FiMapPin,
+  },
+  {
+    id: "orders",
+    label: "Orders",
+    eyebrow: "Fulfillment",
+    description: "Review orders and update their fulfillment status.",
+    icon: FiPackage,
+  },
+  {
+    id: "orderStatus",
+    label: "Track order",
+    eyebrow: "Support",
+    description: "Fetch the latest status timeline for a specific order ID.",
+    icon: FiSearch,
+  },
 ];
 
 export function Sidebar({
@@ -34,7 +55,10 @@ export function Sidebar({
   const getStatValue = (itemId) => {
     if (itemId === "products") return stats.products;
     if (itemId === "categories") return stats.categories;
-    return stats.offers;
+    if (itemId === "offers") return stats.offers;
+    if (itemId === "addresses") return stats.addresses;
+    if (itemId === "orderStatus") return stats.orders;
+    return stats.orders;
   };
 
   return (

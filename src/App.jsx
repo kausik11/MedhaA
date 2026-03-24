@@ -6,7 +6,10 @@ import { ConfirmToast } from "./components/ConfirmToast";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { CategoriesPanel } from "./components/CategoriesPanel";
+import { AddressesPanel } from "./components/AddressesPanel";
 import { OffersPanel } from "./components/OffersPanel";
+import { OrdersPanel } from "./components/OrdersPanel";
+import { OrderStatusPanel } from "./components/OrderStatusPanel";
 import { ProductFormModal } from "./components/ProductFormModal";
 import { ProductsPanel } from "./components/ProductsPanel";
 import { Sidebar } from "./components/Sidebar";
@@ -16,6 +19,9 @@ const VIEWS = {
   products: "products",
   categories: "categories",
   offers: "offers",
+  addresses: "addresses",
+  orders: "orders",
+  orderStatus: "orderStatus",
 };
 
 function App() {
@@ -23,9 +29,13 @@ function App() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [addresses, setAddresses] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [offersLoading, setOffersLoading] = useState(true);
+  const [addressesLoading, setAddressesLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -78,15 +88,19 @@ function App() {
         setProductsLoading(true);
         setCategoriesLoading(true);
         setOffersLoading(true);
+        setAddressesLoading(true);
+        setOrdersLoading(true);
       } else {  
         setIsRefreshing(true);
       }
 
       try {
-        const [productsData, categoriesData, offersData] = await Promise.all([
+        const [productsData, categoriesData, offersData, addressesData, ordersData] = await Promise.all([
           api.getProducts(),
           api.getProductCategories(),
           api.getOffers(),
+          api.getAddresses(),
+          api.getOrders(),
         ]);
 
         if (isCancelled) {
@@ -96,6 +110,8 @@ function App() {
         setProducts(Array.isArray(productsData) ? productsData : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setOffers(Array.isArray(offersData) ? offersData : []);
+        setAddresses(Array.isArray(addressesData) ? addressesData : []);
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (error) {
         if (!isCancelled) {
           showNotice("error", error.message || "Unable to refresh dashboard data.");
@@ -105,6 +121,8 @@ function App() {
           setProductsLoading(false);
           setCategoriesLoading(false);
           setOffersLoading(false);
+          setAddressesLoading(false);
+          setOrdersLoading(false);
           setIsRefreshing(false);
         }
       }
@@ -285,6 +303,94 @@ function App() {
     }
   };
 
+  const handleCreateAddress = async (payload) => {
+    try {
+      const createdAddress = await api.createAddress(payload);
+      setAddresses((current) => [createdAddress, ...current]);
+      showNotice("success", "Address created successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to create address.");
+      throw error;
+    }
+  };
+
+  const handleUpdateAddress = async (addressId, payload) => {
+    try {
+      const updatedAddress = await api.updateAddress(addressId, payload);
+      setAddresses((current) =>
+        current.map((address) => (address._id === addressId ? updatedAddress : address))
+      );
+      showNotice("success", "Address updated successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update address.");
+      throw error;
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    const confirmed = await confirmAction({
+      title: "Delete address?",
+      message: "This will permanently remove the delivery address from the backend.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.deleteAddress(addressId);
+      setAddresses((current) => current.filter((address) => address._id !== addressId));
+      showNotice("success", "Address deleted successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to delete address.");
+      throw error;
+    }
+  };
+
+  const handleCreateOrder = async (payload) => {
+    try {
+      const createdOrder = await api.createOrder(payload);
+      setOrders((current) => [createdOrder, ...current]);
+      showNotice("success", "Order created successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to create order.");
+      throw error;
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, payload) => {
+    try {
+      const updatedOrder = await api.updateOrderStatus(orderId, payload);
+      setOrders((current) =>
+        current.map((order) => (order._id === orderId ? updatedOrder : order))
+      );
+      showNotice("success", "Order status updated successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update order status.");
+      throw error;
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    const confirmed = await confirmAction({
+      title: "Delete order?",
+      message: "This will permanently remove the order from the backend.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.deleteOrder(orderId);
+      setOrders((current) => current.filter((order) => order._id !== orderId));
+      showNotice("success", "Order deleted successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to delete order.");
+      throw error;
+    }
+  };
+
   const handleViewChange = (nextView) => {
     startTransition(() => {
       setActiveView(nextView);
@@ -314,6 +420,8 @@ function App() {
     products: products.length,
     categories: categories.length,
     offers: offers.length,
+    addresses: addresses.length,
+    orders: orders.length,
   };
 
   return (
@@ -354,13 +462,34 @@ function App() {
               onDeleteCategory={handleDeleteCategory}
               onUpdateCategory={handleUpdateCategory}
             />
-          ) : (
+          ) : activeView === VIEWS.offers ? (
             <OffersPanel
               offers={offers}
               loading={offersLoading}
               onCreateOffer={handleCreateOffer}
               onDeleteOffer={handleDeleteOffer}
               onUpdateOffer={handleUpdateOffer}
+            />
+          ) : activeView === VIEWS.addresses ? (
+            <AddressesPanel
+              addresses={addresses}
+              loading={addressesLoading}
+              onCreateAddress={handleCreateAddress}
+              onDeleteAddress={handleDeleteAddress}
+              onUpdateAddress={handleUpdateAddress}
+            />
+          ) : activeView === VIEWS.orderStatus ? (
+            <OrderStatusPanel orders={orders} />
+          ) : (
+            <OrdersPanel
+              addresses={addresses}
+              loading={ordersLoading}
+              offers={offers}
+              orders={orders}
+              products={products}
+              onCreateOrder={handleCreateOrder}
+              onDeleteOrder={handleDeleteOrder}
+              onUpdateOrderStatus={handleUpdateOrderStatus}
             />
           )}
         </main>

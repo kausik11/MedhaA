@@ -97,4 +97,59 @@ export const api = {
       method: "DELETE",
     });
   },
+  getAddresses() {
+    return request("/addresses");
+  },
+  createAddress(payload) {
+    return request("/addresses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  updateAddress(addressId, payload) {
+    return request(`/addresses/${addressId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  deleteAddress(addressId) {
+    return request(`/addresses/${addressId}`, {
+      method: "DELETE",
+    });
+  },
+  getOrders() {
+    return request("/orders");
+  },
+  getOrderStatusByOrderId(orderId) {
+    return request(`/orders/order-id/${encodeURIComponent(orderId)}/status`);
+  },
+  createOrder(payload) {
+    return request("/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  updateOrderStatus(orderId, payload) {
+    return request(`/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  deleteOrder(orderId) {
+    return request(`/orders/${orderId}`, {
+      method: "DELETE",
+    });
+  },
 };
