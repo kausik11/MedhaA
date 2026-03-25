@@ -86,7 +86,7 @@ export function getApiBaseUrl() {
 
 export const api = {
   login(payload) {
-    return request("/users/login", {
+    return request("/users/admin-login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
