@@ -12,8 +12,15 @@ import { OrdersPanel } from "./components/OrdersPanel";
 import { OrderStatusPanel } from "./components/OrderStatusPanel";
 import { ProductFormModal } from "./components/ProductFormModal";
 import { ProductsPanel } from "./components/ProductsPanel";
+import { LoginScreen } from "./components/LoginScreen";
 import { Sidebar } from "./components/Sidebar";
-import { api, getApiBaseUrl } from "./lib/api";
+import {
+  api,
+  clearAuthSession,
+  getApiBaseUrl,
+  getAuthSession,
+  setAuthSession,
+} from "./lib/api";
 
 const VIEWS = {
   products: "products",
@@ -25,6 +32,9 @@ const VIEWS = {
 };
 
 function App() {
+  const [authSession, setAuthSessionState] = useState(() => getAuthSession());
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   const [activeView, setActiveView] = useState(VIEWS.products);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -79,6 +89,10 @@ function App() {
     });
 
   useEffect(() => {
+    if (!authSession?.token) {
+      return undefined;
+    }
+
     let isCancelled = false;
 
     const loadDashboard = async () => {
@@ -114,6 +128,17 @@ function App() {
         setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (error) {
         if (!isCancelled) {
+          if (error.status === 401 || error.status === 403) {
+            clearAuthSession();
+            setAuthSessionState(null);
+            setProducts([]);
+            setCategories([]);
+            setOffers([]);
+            setAddresses([]);
+            setOrders([]);
+            showNotice("error", "Your admin session has expired. Please sign in again.");
+            return;
+          }
           showNotice("error", error.message || "Unable to refresh dashboard data.");
         }
       } finally {
@@ -133,7 +158,52 @@ function App() {
     return () => {
       isCancelled = true;
     };
-  }, [refreshToken]);
+  }, [authSession, refreshToken]);
+
+  const handleCredentialChange = (event) => {
+    const { name, value } = event.target;
+    setCredentials((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setIsAuthSubmitting(true);
+
+    try {
+      const response = await api.login(credentials);
+      const nextSession = {
+        token: response.token,
+        user: response.user,
+      };
+
+      setAuthSession(nextSession);
+      setAuthSessionState(nextSession);
+      setCredentials({ email: "", password: "" });
+      showNotice("success", "Admin session started.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to sign in.");
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleLogout = () => {
+    clearAuthSession();
+    setAuthSessionState(null);
+    setCredentials({ email: "", password: "" });
+    setActiveView(VIEWS.products);
+    setProducts([]);
+    setCategories([]);
+    setOffers([]);
+    setAddresses([]);
+    setOrders([]);
+    setIsProductModalOpen(false);
+    setEditingProduct(null);
+    showNotice("success", "Logged out.");
+  };
 
   const handleCreateProduct = async (formData) => {
     setIsProductSubmitting(true);
@@ -424,6 +494,29 @@ function App() {
     orders: orders.length,
   };
 
+  if (!authSession?.token) {
+    return (
+      <>
+        <LoginScreen
+          credentials={credentials}
+          isSubmitting={isAuthSubmitting}
+          onChange={handleCredentialChange}
+          onSubmit={handleLogin}
+        />
+        <ToastContainer
+          position="top-right"
+          autoClose={2600}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="colored"
+        />
+      </>
+    );
+  }
+
   return (
     <div className={`admin-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <Sidebar
@@ -440,8 +533,10 @@ function App() {
           isRefreshing={isRefreshing}
           isSidebarCollapsed={isSidebarCollapsed}
           onRefresh={handleRefresh}
+          onLogout={handleLogout}
           onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
           stats={stats}
+          user={authSession.user}
         />
 
         <main className="dashboard-main">

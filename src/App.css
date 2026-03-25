@@ -1,3 +1,89 @@
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(193, 224, 161, 0.45), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(255, 210, 148, 0.32), transparent 24%),
+    linear-gradient(180deg, #f4f0e2 0%, #eef3e0 100%);
+}
+
+.login-panel {
+  width: min(1080px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 460px);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.login-copy,
+.login-form-card {
+  border-radius: 28px;
+  border: 1px solid rgba(31, 44, 32, 0.08);
+  box-shadow: 0 24px 60px rgba(67, 83, 58, 0.08);
+}
+
+.login-copy {
+  padding: 38px;
+  color: #f6f2e8;
+  background:
+    radial-gradient(circle at top right, rgba(235, 203, 136, 0.22), transparent 30%),
+    linear-gradient(145deg, rgba(35, 57, 41, 0.96), rgba(56, 88, 54, 0.92));
+}
+
+.login-copy h1,
+.login-form-header h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.03em;
+}
+
+.login-copy h1 {
+  margin-top: 12px;
+  font-size: clamp(2.4rem, 5vw, 4.4rem);
+  line-height: 0.95;
+  color: #fff7e4;
+}
+
+.login-copy p {
+  max-width: 34rem;
+  margin: 18px 0 0;
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: rgba(246, 242, 232, 0.82);
+}
+
+.login-form-card {
+  padding: 30px;
+  display: grid;
+  gap: 18px;
+  align-content: center;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.login-form-header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.login-form-header h2 {
+  font-size: 2rem;
+  color: #1f2c20;
+}
+
+.login-form-header p {
+  margin: 0;
+  color: #516453;
+  line-height: 1.6;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 6px;
+}
+
 .admin-shell {
   min-height: 100vh;
   display: grid;
@@ -249,8 +335,28 @@
 
 .header-button-row {
   display: flex;
+  align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.admin-user-pill {
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(31, 44, 32, 0.08);
+}
+
+.admin-user-pill span,
+.admin-user-pill small {
+  color: #516453;
+}
+
+.admin-user-pill strong {
+  color: #1f2c20;
 }
 
 .stat-pill {
@@ -1328,6 +1434,10 @@
 }
 
 @media (max-width: 1080px) {
+  .login-panel {
+    grid-template-columns: 1fr;
+  }
+
   .admin-shell {
     grid-template-columns: 1fr;
   }
@@ -1379,6 +1489,15 @@
 }
 
 @media (max-width: 720px) {
+  .login-shell {
+    padding: 16px;
+  }
+
+  .login-copy,
+  .login-form-card {
+    padding: 22px 18px;
+  }
+
   .dashboard-header,
   .dashboard-main,
   .dashboard-footer {

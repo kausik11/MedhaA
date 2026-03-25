@@ -1,12 +1,14 @@
-import { FiMenu, FiRefreshCw } from "react-icons/fi";
+import { FiLogOut, FiMenu, FiRefreshCw } from "react-icons/fi";
 
 export function Header({
   activeView,
   isRefreshing,
   isSidebarCollapsed,
   onRefresh,
+  onLogout,
   onToggleSidebar,
   stats,
+  user,
 }) {
   const title = activeView === "products"
     ? "Products workspace"
@@ -64,6 +66,11 @@ export function Header({
         </div>
 
         <div className="header-button-row">
+          <div className="admin-user-pill">
+            <span>Signed in as</span>
+            <strong>{user?.firstName || user?.email}</strong>
+            <small>{user?.role}</small>
+          </div>
           <button type="button" className="ghost-button refresh-button" onClick={onToggleSidebar}>
             <FiMenu className="button-icon" />
             {isSidebarCollapsed ? "Expand menu" : "Collapse menu"}
@@ -71,6 +78,10 @@ export function Header({
           <button type="button" className="ghost-button refresh-button" onClick={onRefresh}>
             <FiRefreshCw className={`button-icon ${isRefreshing ? "spin-icon" : ""}`} />
             {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
+          <button type="button" className="ghost-danger-button refresh-button" onClick={onLogout}>
+            <FiLogOut className="button-icon" />
+            Logout
           </button>
         </div>
       </div>
