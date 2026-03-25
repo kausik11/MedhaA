@@ -1,41 +1,30 @@
-import { startTransition, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 import { ConfirmToast } from "./components/ConfirmToast";
-import { Footer } from "./components/Footer";
-import { Header } from "./components/Header";
+import { AdminShell } from "./components/AdminShell";
 import { CategoriesPanel } from "./components/CategoriesPanel";
 import { AddressesPanel } from "./components/AddressesPanel";
 import { OffersPanel } from "./components/OffersPanel";
 import { OrdersPanel } from "./components/OrdersPanel";
 import { OrderStatusPanel } from "./components/OrderStatusPanel";
-import { ProductFormModal } from "./components/ProductFormModal";
 import { ProductsPanel } from "./components/ProductsPanel";
 import { LoginScreen } from "./components/LoginScreen";
-import { Sidebar } from "./components/Sidebar";
 import {
   api,
   clearAuthSession,
-  getApiBaseUrl,
   getAuthSession,
   setAuthSession,
 } from "./lib/api";
-
-const VIEWS = {
-  products: "products",
-  categories: "categories",
-  offers: "offers",
-  addresses: "addresses",
-  orders: "orders",
-  orderStatus: "orderStatus",
-};
+import { ADMIN_DEFAULT_ROUTE } from "./constants/adminRoutes";
 
 function App() {
+  const navigate = useNavigate();
   const [authSession, setAuthSessionState] = useState(() => getAuthSession());
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
-  const [activeView, setActiveView] = useState(VIEWS.products);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [offers, setOffers] = useState([]);
@@ -182,6 +171,7 @@ function App() {
       setAuthSession(nextSession);
       setAuthSessionState(nextSession);
       setCredentials({ email: "", password: "" });
+      navigate(ADMIN_DEFAULT_ROUTE, { replace: true });
       showNotice("success", "Admin session started.");
     } catch (error) {
       showNotice("error", error.message || "Unable to sign in.");
@@ -194,7 +184,6 @@ function App() {
     clearAuthSession();
     setAuthSessionState(null);
     setCredentials({ email: "", password: "" });
-    setActiveView(VIEWS.products);
     setProducts([]);
     setCategories([]);
     setOffers([]);
@@ -202,6 +191,7 @@ function App() {
     setOrders([]);
     setIsProductModalOpen(false);
     setEditingProduct(null);
+    navigate("/login", { replace: true });
     showNotice("success", "Logged out.");
   };
 
@@ -461,12 +451,6 @@ function App() {
     }
   };
 
-  const handleViewChange = (nextView) => {
-    startTransition(() => {
-      setActiveView(nextView);
-    });
-  };
-
   const handleRefresh = () => {
     setRefreshToken((current) => current + 1);
   };
@@ -494,113 +478,121 @@ function App() {
     orders: orders.length,
   };
 
-  if (!authSession?.token) {
-    return (
-      <>
-        <LoginScreen
-          credentials={credentials}
-          isSubmitting={isAuthSubmitting}
-          onChange={handleCredentialChange}
-          onSubmit={handleLogin}
-        />
-        <ToastContainer
-          position="top-right"
-          autoClose={2600}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          pauseOnHover
-          draggable
-          theme="colored"
-        />
-      </>
-    );
-  }
-
   return (
-    <div className={`admin-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
-      <Sidebar
-        activeView={activeView}
-        isCollapsed={isSidebarCollapsed}
-        onChangeView={handleViewChange}
-        onToggleCollapse={() => setIsSidebarCollapsed((current) => !current)}
-        stats={stats}
-      />
-
-      <div className="dashboard-column">
-        <Header
-          activeView={activeView}
-          isRefreshing={isRefreshing}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onRefresh={handleRefresh}
-          onLogout={handleLogout}
-          onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
-          stats={stats}
-          user={authSession.user}
+    <>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            authSession?.token ? (
+              <Navigate replace to={ADMIN_DEFAULT_ROUTE} />
+            ) : (
+              <LoginScreen
+                credentials={credentials}
+                isSubmitting={isAuthSubmitting}
+                onChange={handleCredentialChange}
+                onSubmit={handleLogin}
+              />
+            )
+          }
         />
-
-        <main className="dashboard-main">
-          {activeView === VIEWS.products ? (
-            <ProductsPanel
-              categories={categories}
-              products={products}
-              loading={productsLoading}
-              onDeleteProduct={handleDeleteProduct}
-              onEditProduct={handleOpenEditProduct}
-              onOpenAddProduct={handleOpenCreateProduct}
-            />
-          ) : activeView === VIEWS.categories ? (
-            <CategoriesPanel
-              categories={categories}
-              loading={categoriesLoading}
-              onCreateCategory={handleCreateCategory}
-              onDeleteCategory={handleDeleteCategory}
-              onUpdateCategory={handleUpdateCategory}
-            />
-          ) : activeView === VIEWS.offers ? (
-            <OffersPanel
-              offers={offers}
-              loading={offersLoading}
-              onCreateOffer={handleCreateOffer}
-              onDeleteOffer={handleDeleteOffer}
-              onUpdateOffer={handleUpdateOffer}
-            />
-          ) : activeView === VIEWS.addresses ? (
-            <AddressesPanel
-              addresses={addresses}
-              loading={addressesLoading}
-              onCreateAddress={handleCreateAddress}
-              onDeleteAddress={handleDeleteAddress}
-              onUpdateAddress={handleUpdateAddress}
-            />
-          ) : activeView === VIEWS.orderStatus ? (
-            <OrderStatusPanel orders={orders} />
-          ) : (
-            <OrdersPanel
-              addresses={addresses}
-              loading={ordersLoading}
-              offers={offers}
-              orders={orders}
-              products={products}
-              onCreateOrder={handleCreateOrder}
-              onDeleteOrder={handleDeleteOrder}
-              onUpdateOrderStatus={handleUpdateOrderStatus}
-            />
-          )}
-        </main>
-
-        <Footer apiBaseUrl={getApiBaseUrl()} />
-      </div>
-
-      <ProductFormModal
-        categories={categories}
-        product={editingProduct}
-        isOpen={isProductModalOpen}
-        isSubmitting={isProductSubmitting}
-        onClose={handleCloseProductModal}
-        onSubmit={editingProduct ? handleUpdateProduct : handleCreateProduct}
-      />
-
+        <Route
+          path="/"
+          element={
+            authSession?.token ? (
+              <AdminShell
+                categories={categories}
+                editingProduct={editingProduct}
+                isProductModalOpen={isProductModalOpen}
+                isProductSubmitting={isProductSubmitting}
+                isRefreshing={isRefreshing}
+                isSidebarCollapsed={isSidebarCollapsed}
+                onCloseProductModal={handleCloseProductModal}
+                onLogout={handleLogout}
+                onRefresh={handleRefresh}
+                onSubmitProduct={editingProduct ? handleUpdateProduct : handleCreateProduct}
+                onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
+                setIsSidebarCollapsed={setIsSidebarCollapsed}
+                stats={stats}
+                user={authSession.user}
+              />
+            ) : (
+              <Navigate replace to="/login" />
+            )
+          }
+        >
+          <Route index element={<Navigate replace to={ADMIN_DEFAULT_ROUTE} />} />
+          <Route
+            path="products"
+            element={
+              <ProductsPanel
+                categories={categories}
+                products={products}
+                loading={productsLoading}
+                onDeleteProduct={handleDeleteProduct}
+                onEditProduct={handleOpenEditProduct}
+                onOpenAddProduct={handleOpenCreateProduct}
+              />
+            }
+          />
+          <Route
+            path="categories"
+            element={
+              <CategoriesPanel
+                categories={categories}
+                loading={categoriesLoading}
+                onCreateCategory={handleCreateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onUpdateCategory={handleUpdateCategory}
+              />
+            }
+          />
+          <Route
+            path="offers"
+            element={
+              <OffersPanel
+                offers={offers}
+                loading={offersLoading}
+                onCreateOffer={handleCreateOffer}
+                onDeleteOffer={handleDeleteOffer}
+                onUpdateOffer={handleUpdateOffer}
+              />
+            }
+          />
+          <Route
+            path="addresses"
+            element={
+              <AddressesPanel
+                addresses={addresses}
+                loading={addressesLoading}
+                onCreateAddress={handleCreateAddress}
+                onDeleteAddress={handleDeleteAddress}
+                onUpdateAddress={handleUpdateAddress}
+              />
+            }
+          />
+          <Route
+            path="orders"
+            element={
+              <OrdersPanel
+                addresses={addresses}
+                loading={ordersLoading}
+                offers={offers}
+                orders={orders}
+                products={products}
+                onCreateOrder={handleCreateOrder}
+                onDeleteOrder={handleDeleteOrder}
+                onUpdateOrderStatus={handleUpdateOrderStatus}
+              />
+            }
+          />
+          <Route path="orders/status" element={<OrderStatusPanel orders={orders} />} />
+        </Route>
+        <Route
+          path="*"
+          element={<Navigate replace to={authSession?.token ? ADMIN_DEFAULT_ROUTE : "/login"} />}
+        />
+      </Routes>
       <ToastContainer
         position="top-right"
         autoClose={2600}
@@ -611,7 +603,7 @@ function App() {
         draggable
         theme="colored"
       />
-    </div>
+    </>
   );
 }
 

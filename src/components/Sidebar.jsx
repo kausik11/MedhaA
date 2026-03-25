@@ -1,66 +1,20 @@
 import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiMapPin, FiPackage, FiSearch, FiTag } from "react-icons/fi";
+import { NavLink } from "react-router-dom";
+import { ADMIN_ROUTES } from "../constants/adminRoutes";
 
-const navItems = [
-  {
-    id: "products",
-    label: "Products",
-    eyebrow: "Catalog",
-    description: "Add products and manage the visible inventory.",
-    icon: FiBox,
-  },
-  {
-    id: "categories",
-    label: "Categories",
-    eyebrow: "Structure",
-    description: "Maintain product categories used across the catalog.",
-    icon: FiGrid,
-  },
-  {
-    id: "offers",
-    label: "Offers",
-    eyebrow: "Checkout",
-    description: "Manage promo codes and percentage discounts for orders.",
-    icon: FiTag,
-  },
-  {
-    id: "addresses",
-    label: "Addresses",
-    eyebrow: "Delivery",
-    description: "Manage delivery addresses used across orders.",
-    icon: FiMapPin,
-  },
-  {
-    id: "orders",
-    label: "Orders",
-    eyebrow: "Fulfillment",
-    description: "Review orders and update their fulfillment status.",
-    icon: FiPackage,
-  },
-  {
-    id: "orderStatus",
-    label: "Track order",
-    eyebrow: "Support",
-    description: "Fetch the latest status timeline for a specific order ID.",
-    icon: FiSearch,
-  },
-];
+const navIcons = {
+  products: FiBox,
+  categories: FiGrid,
+  offers: FiTag,
+  addresses: FiMapPin,
+  orders: FiPackage,
+  orderStatus: FiSearch,
+};
 
 export function Sidebar({
-  activeView,
   isCollapsed,
-  onChangeView,
   onToggleCollapse,
-  stats,
 }) {
-  const getStatValue = (itemId) => {
-    if (itemId === "products") return stats.products;
-    if (itemId === "categories") return stats.categories;
-    if (itemId === "offers") return stats.offers;
-    if (itemId === "addresses") return stats.addresses;
-    if (itemId === "orderStatus") return stats.orders;
-    return stats.orders;
-  };
-
   return (
     <aside className="sidebar">
       <div className="sidebar-top-row">
@@ -86,40 +40,33 @@ export function Sidebar({
       </div>
 
       <nav className="sidebar-nav" aria-label="Admin sections">
-        {navItems.map((item) => {
-          const ItemIcon = item.icon;
+        {ADMIN_ROUTES.map((item) => {
+          const ItemIcon = navIcons[item.id];
 
           return (
-            <button
+            <NavLink
               key={item.id}
-              className={`sidebar-link ${activeView === item.id ? "is-active" : ""}`}
-              type="button"
-              onClick={() => onChangeView(item.id)}
+              className={({ isActive }) => `sidebar-link ${isActive ? "is-active" : ""}`}
+              end
+              to={item.path}
               title={isCollapsed ? item.label : undefined}
             >
               {isCollapsed ? (
-                <>
+                <span className="sidebar-nav-icon-wrap">
+                  <ItemIcon className="sidebar-nav-icon" />
+                </span>
+              ) : (
+                <span className="sidebar-link-compact">
                   <span className="sidebar-nav-icon-wrap">
                     <ItemIcon className="sidebar-nav-icon" />
                   </span>
-                  <span className="sidebar-stat sidebar-stat-compact">
-                    {getStatValue(item.id)}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="sidebar-link-compact">
-                    <span className="sidebar-nav-icon-wrap">
-                      <ItemIcon className="sidebar-nav-icon" />
-                    </span>
+                  <span className="sidebar-link-copy">
                     <strong>{item.label}</strong>
-                    <span className="sidebar-stat">
-                      {getStatValue(item.id)}
-                    </span>
+                    <small>{item.eyebrow}</small>
                   </span>
-                </>
+                </span>
               )}
-            </button>
+            </NavLink>
           );
         })}
       </nav>

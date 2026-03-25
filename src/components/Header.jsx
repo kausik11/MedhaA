@@ -1,89 +1,111 @@
-import { FiLogOut, FiMenu, FiRefreshCw } from "react-icons/fi";
+import { useState } from "react";
+import { FiBell, FiLogOut, FiMenu, FiRefreshCw, FiSearch } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { ADMIN_ROUTES } from "../constants/adminRoutes";
 
 export function Header({
-  activeView,
+  currentRoute,
   isRefreshing,
   isSidebarCollapsed,
   onRefresh,
   onLogout,
   onToggleSidebar,
-  stats,
   user,
 }) {
-  const title = activeView === "products"
-    ? "Products workspace"
-    : activeView === "categories"
-      ? "Product categories workspace"
-      : activeView === "offers"
-        ? "Offers workspace"
-        : activeView === "addresses"
-          ? "Addresses workspace"
-          : activeView === "orderStatus"
-            ? "Order status workspace"
-            : "Orders workspace";
-  const subtitle = activeView === "products"
-    ? "Open the add-product modal, upload images, and review the live catalog below."
-    : activeView === "categories"
-      ? "Add, rename, or remove categories used by the backend product routes."
-      : activeView === "offers"
-        ? "Create promo codes, adjust discount percentages, and keep checkout incentives current."
-        : activeView === "addresses"
-          ? "Review delivery addresses, update contact details, and keep shipping destinations organized."
-          : activeView === "orderStatus"
-            ? "Look up a single order by order ID and review the latest status history without opening the full orders workspace."
-            : "Review incoming orders, inspect totals, and push each order through the fulfillment pipeline.";
+  const navigate = useNavigate();
+  const [searchValue, setSearchValue] = useState("");
+  const userInitial = user?.firstName?.[0] || user?.email?.[0] || "A";
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const query = searchValue.trim().toLowerCase();
+    if (!query) {
+      return;
+    }
+
+    const matchedRoute = ADMIN_ROUTES.find((route) =>
+      [route.label, route.eyebrow, route.description]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(query))
+    );
+
+    if (matchedRoute) {
+      navigate(matchedRoute.path);
+      setSearchValue("");
+    }
+  };
 
   return (
-    <header className="dashboard-header">
-      <div>
-        <p className="eyebrow">Operations</p>
-        <h2>{title}</h2>
-        <p className="header-copy">{subtitle}</p>
+    <header className="topbar">
+      <div className="topbar-section topbar-left">
+        <button
+          type="button"
+          className="topbar-icon-button"
+          onClick={onToggleSidebar}
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <FiMenu className="button-icon" />
+        </button>
+
+        <form className="topbar-search" onSubmit={handleSubmit}>
+          <FiSearch className="topbar-search-icon" />
+          <input
+            list="admin-route-suggestions"
+            type="search"
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder="Search content, services, users"
+            aria-label="Search admin routes"
+          />
+          <datalist id="admin-route-suggestions">
+            {ADMIN_ROUTES.map((route) => (
+              <option key={route.id} value={route.label} />
+            ))}
+          </datalist>
+        </form>
       </div>
 
-      <div className="header-controls">
-        <div className="header-stats">
-          <div className="stat-pill">
-            <span>Products</span>
-            <strong>{stats.products}</strong>
-          </div>
-          <div className="stat-pill">
-            <span>Categories</span>
-            <strong>{stats.categories}</strong>
-          </div>
-          <div className="stat-pill">
-            <span>Offers</span>
-            <strong>{stats.offers}</strong>
-          </div>
-          <div className="stat-pill">
-            <span>Addresses</span>
-            <strong>{stats.addresses}</strong>
-          </div>
-          <div className="stat-pill">
-            <span>Orders</span>
-            <strong>{stats.orders}</strong>
-          </div>
+      <div className="topbar-section topbar-right">
+        <div className="topbar-route-chip">
+          <span>{currentRoute?.eyebrow || "Workspace"}</span>
+          <strong>{currentRoute?.label || "Admin"}</strong>
         </div>
 
-        <div className="header-button-row">
-          <div className="admin-user-pill">
-            <span>Signed in as</span>
+        <button
+          type="button"
+          className="topbar-icon-button"
+          onClick={onRefresh}
+          aria-label="Refresh"
+          title="Refresh"
+        >
+          <FiRefreshCw className={`button-icon ${isRefreshing ? "spin-icon" : ""}`} />
+        </button>
+
+        <button
+          type="button"
+          className="topbar-icon-button"
+          aria-label="Notifications"
+          title="Notifications"
+        >
+          <FiBell className="button-icon" />
+        </button>
+
+        <button
+          type="button"
+          className="topbar-profile"
+          onClick={onLogout}
+          aria-label="Logout"
+          title="Logout"
+        >
+          <span className="topbar-profile-badge">{userInitial.toUpperCase()}</span>
+          <span className="topbar-profile-copy">
             <strong>{user?.firstName || user?.email}</strong>
             <small>{user?.role}</small>
-          </div>
-          <button type="button" className="ghost-button refresh-button" onClick={onToggleSidebar}>
-            <FiMenu className="button-icon" />
-            {isSidebarCollapsed ? "Expand menu" : "Collapse menu"}
-          </button>
-          <button type="button" className="ghost-button refresh-button" onClick={onRefresh}>
-            <FiRefreshCw className={`button-icon ${isRefreshing ? "spin-icon" : ""}`} />
-            {isRefreshing ? "Refreshing..." : "Refresh"}
-          </button>
-          <button type="button" className="ghost-danger-button refresh-button" onClick={onLogout}>
-            <FiLogOut className="button-icon" />
-            Logout
-          </button>
-        </div>
+          </span>
+          <FiLogOut className="button-icon" />
+        </button>
       </div>
     </header>
   );
