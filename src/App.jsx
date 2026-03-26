@@ -234,10 +234,21 @@ function App() {
     }
   };
 
-  const handleDeleteProduct = async (productId) => {
+  const handleUpdateProductPublicationStatus = async (
+    product,
+    publicationStatus
+  ) => {
+    const nextActionLabel =
+      publicationStatus === "published" ? "publish" : "move to draft";
     const confirmed = await confirmAction({
-      title: "Delete product?",
-      message: "This will permanently remove the product from the catalog.",
+      title:
+        publicationStatus === "published"
+          ? "Publish product?"
+          : "Move product to draft?",
+      message:
+        publicationStatus === "published"
+          ? "This product will become visible in the public catalog."
+          : "This product will be hidden from the public catalog.",
     });
 
     if (!confirmed) {
@@ -245,11 +256,46 @@ function App() {
     }
 
     try {
-      await api.deleteProduct(productId);
-      setProducts((current) => current.filter((product) => product._id !== productId));
-      showNotice("success", "Product deleted successfully.");
+      const updatedProduct = await api.updateProductPublicationStatus(product._id, {
+        publicationStatus,
+      });
+      setProducts((current) =>
+        current.map((item) => (item._id === product._id ? updatedProduct : item))
+      );
+      showNotice(
+        "success",
+        `Product ${nextActionLabel === "publish" ? "published" : "moved to draft"} successfully.`
+      );
     } catch (error) {
-      showNotice("error", error.message || "Unable to delete product.");
+      showNotice(
+        "error",
+        error.message ||
+          `Unable to ${nextActionLabel === "publish" ? "publish" : "move product to draft"}.`
+      );
+    }
+  };
+
+  const handleDeleteProduct = async (product) => {
+    const confirmed = await confirmAction({
+      title: "Move product to draft?",
+      message: "This will hide the product from the public catalog without deleting it.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await api.deleteProduct(product._id);
+      const updatedProduct = response?.product
+        ? response.product
+        : { ...product, publicationStatus: "draft" };
+      setProducts((current) =>
+        current.map((item) => (item._id === product._id ? updatedProduct : item))
+      );
+      showNotice("success", "Product moved to draft successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to move product to draft.");
     }
   };
 
@@ -460,9 +506,14 @@ function App() {
     setIsProductModalOpen(true);
   };
 
-  const handleOpenEditProduct = (product) => {
-    setEditingProduct(product);
-    setIsProductModalOpen(true);
+  const handleOpenEditProduct = async (product) => {
+    try {
+      const latestProduct = await api.getProductById(product._id);
+      setEditingProduct(latestProduct);
+      setIsProductModalOpen(true);
+    } catch (error) {
+      showNotice("error", error.message || "Unable to load product details.");
+    }
   };
 
   const handleCloseProductModal = () => {
@@ -532,6 +583,7 @@ function App() {
                 onDeleteProduct={handleDeleteProduct}
                 onEditProduct={handleOpenEditProduct}
                 onOpenAddProduct={handleOpenCreateProduct}
+                onToggleProductPublicationStatus={handleUpdateProductPublicationStatus}
               />
             }
           />

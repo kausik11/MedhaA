@@ -1,4 +1,4 @@
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiEye, FiEyeOff } from "react-icons/fi";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -21,13 +21,15 @@ const getPlainText = (value) =>
     .replace(/\s+/g, " ")
     .trim();
 
-export function ProductCard({ product, onDelete, onEdit }) {
+export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStatus }) {
   const imageUrl = product.images?.[0]?.imageUrl;
   const categoryNames = Array.isArray(product.category)
     ? product.category.map((item) => item.name).filter(Boolean)
     : [];
   const effectivePrice = product.discountPrice ?? product.actualPrice;
   const descriptionPreview = getPlainText(product.description);
+  const publicationStatus = product.publicationStatus || "published";
+  const isDraft = publicationStatus === "draft";
 
   return (
     <article className="product-card">
@@ -44,6 +46,11 @@ export function ProductCard({ product, onDelete, onEdit }) {
       <div className="product-card-body">
         <div className="product-card-topline">
           <span className="product-type-chip">{product.type}</span>
+          <span
+            className={`product-status-chip ${isDraft ? "is-draft" : "is-published"}`}
+          >
+            {publicationStatus}
+          </span>
           {product.slug ? <span className="product-slug-chip">{product.slug}</span> : null}
         </div>
 
@@ -94,14 +101,25 @@ export function ProductCard({ product, onDelete, onEdit }) {
             <FiEdit2 className="button-icon" />
             Edit
           </button>
-          <button
-            type="button"
-            className="ghost-danger-button"
-            onClick={() => onDelete(product._id)}
-          >
-            <FiTrash2 className="button-icon" />
-            Delete
-          </button>
+          {isDraft ? (
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => onTogglePublicationStatus(product, "published")}
+            >
+              <FiEye className="button-icon" />
+              Publish
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ghost-danger-button"
+              onClick={() => onDelete(product)}
+            >
+              <FiEyeOff className="button-icon" />
+              Move to draft
+            </button>
+          )}
         </div>
       </aside>
     </article>

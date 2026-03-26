@@ -8,10 +8,12 @@ export function ProductsPanel({
   onDeleteProduct,
   onEditProduct,
   onOpenAddProduct,
+  onToggleProductPublicationStatus,
   products,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const searchValue = deferredSearchTerm.trim().toLowerCase();
@@ -27,8 +29,10 @@ export function ProductsPanel({
       : [];
     const matchesCategory =
       categoryFilter === "all" || categoryNames.includes(categoryFilter);
+    const matchesStatus =
+      statusFilter === "all" || product.publicationStatus === statusFilter;
 
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   return (
@@ -73,6 +77,18 @@ export function ProductsPanel({
             ))}
           </select>
         </label>
+
+        <label className="field-shell">
+          <span>Status</span>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="all">All statuses</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+          </select>
+        </label>
       </div>
 
       {loading ? (
@@ -88,6 +104,7 @@ export function ProductsPanel({
               product={product}
               onDelete={onDeleteProduct}
               onEdit={onEditProduct}
+              onTogglePublicationStatus={onToggleProductPublicationStatus}
             />
           ))}
         </div>

@@ -547,7 +547,7 @@
 }
 
 .filter-bar {
-  grid-template-columns: minmax(0, 1fr) 240px;
+  grid-template-columns: minmax(0, 1fr) 220px 220px;
 }
 
 .category-create-bar {
@@ -758,6 +758,29 @@
   font-size: 0.8rem;
   letter-spacing: 0.04em;
   text-transform: lowercase;
+}
+
+.product-status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.product-status-chip.is-published {
+  background: rgba(54, 124, 79, 0.14);
+  border: 1px solid rgba(54, 124, 79, 0.24);
+  color: #1f6a40;
+}
+
+.product-status-chip.is-draft {
+  background: rgba(181, 132, 42, 0.14);
+  border: 1px solid rgba(181, 132, 42, 0.24);
+  color: #8a5c15;
 }
 
 .soft-chip {

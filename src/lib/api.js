@@ -84,6 +84,21 @@ export function getApiBaseUrl() {
   return API_BASE_URL;
 }
 
+function buildQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value == null || value === "") {
+      return;
+    }
+
+    searchParams.set(key, `${value}`);
+  });
+
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
 export const api = {
   login(payload) {
     return request("/users/admin-login", {
@@ -94,8 +109,14 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
-  getProducts() {
-    return request("/products");
+  getProducts(params) {
+    return request(`/products${buildQueryString(params)}`);
+  },
+  getProductById(productId) {
+    return request(`/products/${productId}`);
+  },
+  getProductBySlug(slug) {
+    return request(`/products/slug/${encodeURIComponent(slug)}`);
   },
   createProduct(formData) {
     return request("/products", {
@@ -112,6 +133,15 @@ export const api = {
   deleteProduct(productId) {
     return request(`/products/${productId}`, {
       method: "DELETE",
+    });
+  },
+  updateProductPublicationStatus(productId, payload) {
+    return request(`/products/${productId}/publication-status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
   },
   getProductCategories() {

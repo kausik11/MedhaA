@@ -33,6 +33,7 @@ const createInitialState = () => ({
   effectiveWith: "",
   form: "",
   nonVegetarianSupplement: false,
+  publicationStatus: "draft",
 });
 
 const createFormState = (product) => {
@@ -77,6 +78,7 @@ const createFormState = (product) => {
     effectiveWith: product.extraInfo?.effectiveWith || "",
     form: product.extraInfo?.form || "",
     nonVegetarianSupplement: Boolean(product.nonVegetarianSupplement),
+    publicationStatus: product.publicationStatus || "published",
   };
 };
 
@@ -147,6 +149,7 @@ export function ProductFormModal({
     payload.append("description", normalizeRichText(formState.description));
     payload.append("actualPrice", formState.actualPrice);
     payload.append("nonVegetarianSupplement", `${formState.nonVegetarianSupplement}`);
+    payload.append("publicationStatus", formState.publicationStatus);
 
     if (formState.discountPercentage) {
       payload.append("discountPercentage", formState.discountPercentage);
@@ -358,6 +361,17 @@ export function ProductFormModal({
                   value={formState.discountPercentage}
                   onChange={(event) => updateField("discountPercentage", event.target.value)}
                 />
+              </label>
+
+              <label className="field-shell">
+                <span>Visibility</span>
+                <select
+                  value={formState.publicationStatus}
+                  onChange={(event) => updateField("publicationStatus", event.target.value)}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
               </label>
 
               <label className="field-shell modal-grid-span-2">
