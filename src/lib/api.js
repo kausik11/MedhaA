@@ -109,6 +109,83 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  sendRegistrationEmailOtp(payload) {
+    return request("/users/send-registration-email-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  verifyRegistrationEmailOtp(payload) {
+    return request("/users/verify-registration-email-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  sendEmailVerificationOtp() {
+    return request("/users/send-email-verification-otp", {
+      method: "POST",
+    });
+  },
+  verifyEmailOtp(payload) {
+    return request("/users/verify-email-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  sendForgotPasswordOtp(payload) {
+    return request("/users/forgot-password/send-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  verifyForgotPasswordOtp(payload) {
+    return request("/users/forgot-password/verify-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  resetForgotPassword(payload) {
+    return request("/users/forgot-password/reset-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  registerUser(formData) {
+    return request("/users/register", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  getUsers() {
+    return request("/users");
+  },
+  getUserById(userId) {
+    return request(`/users/${userId}`);
+  },
+  updateUser(userId, formData) {
+    return request(`/users/${userId}`, {
+      method: "PUT",
+      body: formData,
+    });
+  },
   getProducts(params) {
     return request(`/products${buildQueryString(params)}`);
   },

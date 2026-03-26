@@ -1,8 +1,9 @@
-import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiMapPin, FiPackage, FiSearch, FiTag } from "react-icons/fi";
+import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiMapPin, FiPackage, FiSearch, FiTag, FiUsers } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import { ADMIN_ROUTES } from "../constants/adminRoutes";
 
 const navIcons = {
+  users: FiUsers,
   products: FiBox,
   categories: FiGrid,
   offers: FiTag,

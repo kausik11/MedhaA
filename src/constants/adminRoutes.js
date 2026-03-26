@@ -2,6 +2,17 @@ export const ADMIN_DEFAULT_ROUTE = "/products";
 
 export const ADMIN_ROUTES = [
   {
+    id: "users",
+    path: "/users",
+    label: "Users",
+    eyebrow: "Accounts",
+    description: "Review admin and normal accounts, update roles, and manage user details.",
+    headerTitle: "Users workspace",
+    headerSubtitle:
+      "Create new users with email OTP, update account details, and verify the current admin email when needed.",
+    statKey: "users",
+  },
+  {
     id: "products",
     path: "/products",
     label: "Products",

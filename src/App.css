@@ -79,6 +79,17 @@
   line-height: 1.6;
 }
 
+.auth-mode-switch,
+.forgot-password-flow,
+.user-verification-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-mode-switch {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .login-submit {
   width: 100%;
   margin-top: 6px;
@@ -912,6 +923,29 @@
   padding: 18px 20px;
 }
 
+.user-verification-card {
+  align-items: start;
+}
+
+.user-verification-actions {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.user-avatar-row {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar-image {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 44, 32, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+}
+
 .category-card-main {
   display: grid;
   gap: 6px;
@@ -1608,6 +1642,8 @@
   .filter-bar,
   .category-create-bar,
   .offer-create-bar,
+  .auth-mode-switch,
+  .user-verification-actions,
   .address-form-grid,
   .order-meta-grid,
   .order-split-grid,

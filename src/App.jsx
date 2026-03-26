@@ -11,6 +11,7 @@ import { OffersPanel } from "./components/OffersPanel";
 import { OrdersPanel } from "./components/OrdersPanel";
 import { OrderStatusPanel } from "./components/OrderStatusPanel";
 import { ProductsPanel } from "./components/ProductsPanel";
+import { UsersPanel } from "./components/UsersPanel";
 import { LoginScreen } from "./components/LoginScreen";
 import {
   api,
@@ -26,11 +27,13 @@ function App() {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   const [products, setProducts] = useState([]);
+  const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [offers, setOffers] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [offersLoading, setOffersLoading] = useState(true);
   const [addressesLoading, setAddressesLoading] = useState(true);
@@ -89,6 +92,7 @@ function App() {
 
       if (isInitialLoad) {
         setProductsLoading(true);
+        setUsersLoading(true);
         setCategoriesLoading(true);
         setOffersLoading(true);
         setAddressesLoading(true);
@@ -98,8 +102,9 @@ function App() {
       }
 
       try {
-        const [productsData, categoriesData, offersData, addressesData, ordersData] = await Promise.all([
+        const [productsData, usersData, categoriesData, offersData, addressesData, ordersData] = await Promise.all([
           api.getProducts(),
+          api.getUsers(),
           api.getProductCategories(),
           api.getOffers(),
           api.getAddresses(),
@@ -111,6 +116,7 @@ function App() {
         }
 
         setProducts(Array.isArray(productsData) ? productsData : []);
+        setUsers(Array.isArray(usersData) ? usersData : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setOffers(Array.isArray(offersData) ? offersData : []);
         setAddresses(Array.isArray(addressesData) ? addressesData : []);
@@ -121,6 +127,7 @@ function App() {
             clearAuthSession();
             setAuthSessionState(null);
             setProducts([]);
+            setUsers([]);
             setCategories([]);
             setOffers([]);
             setAddresses([]);
@@ -133,6 +140,7 @@ function App() {
       } finally {
         if (!isCancelled) {
           setProductsLoading(false);
+          setUsersLoading(false);
           setCategoriesLoading(false);
           setOffersLoading(false);
           setAddressesLoading(false);
@@ -185,6 +193,7 @@ function App() {
     setAuthSessionState(null);
     setCredentials({ email: "", password: "" });
     setProducts([]);
+    setUsers([]);
     setCategories([]);
     setOffers([]);
     setAddresses([]);
@@ -296,6 +305,94 @@ function App() {
       showNotice("success", "Product moved to draft successfully.");
     } catch (error) {
       showNotice("error", error.message || "Unable to move product to draft.");
+    }
+  };
+
+  const handleCreateUser = {
+    sendRegistrationOtp: async (payload) => {
+      const response = await api.sendRegistrationEmailOtp(payload);
+      showNotice("success", response.message || "Registration OTP sent successfully.");
+      return response;
+    },
+    verifyRegistrationOtp: async (payload) => {
+      const response = await api.verifyRegistrationEmailOtp(payload);
+      showNotice("success", response.message || "Registration OTP verified successfully.");
+      return response;
+    },
+    submit: async (formData) => {
+      try {
+        const response = await api.registerUser(formData);
+        const createdUser = response?.user || response;
+        setUsers((current) => [createdUser, ...current]);
+        showNotice("success", "User created successfully.");
+        return response;
+      } catch (error) {
+        showNotice("error", error.message || "Unable to create user.");
+        throw error;
+      }
+    },
+  };
+
+  const handleUpdateUser = async (userId, formData) => {
+    try {
+      const updatedUser = await api.updateUser(userId, formData);
+      setUsers((current) =>
+        current.map((user) => (user._id === userId ? updatedUser : user))
+      );
+
+      if (authSession?.user?._id === userId) {
+        const nextSession = {
+          ...authSession,
+          user: updatedUser,
+        };
+        setAuthSession(nextSession);
+        setAuthSessionState(nextSession);
+      }
+
+      showNotice("success", "User updated successfully.");
+      return updatedUser;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update user.");
+      throw error;
+    }
+  };
+
+  const handleSendCurrentUserVerificationOtp = async () => {
+    try {
+      const response = await api.sendEmailVerificationOtp();
+      showNotice("success", response.message || "Email OTP sent successfully.");
+      return response;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to send email verification OTP.");
+      throw error;
+    }
+  };
+
+  const handleVerifyCurrentUserEmailOtp = async (otp) => {
+    try {
+      const response = await api.verifyEmailOtp({ otp });
+      const updatedUser = response?.user;
+
+      if (updatedUser) {
+        setUsers((current) =>
+          current.map((user) => (user._id === updatedUser._id ? updatedUser : user))
+        );
+
+        if (authSession?.token) {
+          const nextSession = {
+            ...authSession,
+            user: updatedUser,
+          };
+          setAuthSession(nextSession);
+          setAuthSessionState(nextSession);
+        }
+      }
+
+      showNotice("success", response.message || "Email verified successfully.");
+      return response;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to verify email OTP.");
+      throw error;
     }
   };
 
@@ -523,6 +620,7 @@ function App() {
 
   const stats = {
     products: products.length,
+    users: users.length,
     categories: categories.length,
     offers: offers.length,
     addresses: addresses.length,
@@ -539,10 +637,49 @@ function App() {
               <Navigate replace to={ADMIN_DEFAULT_ROUTE} />
             ) : (
               <LoginScreen
-                credentials={credentials}
                 isSubmitting={isAuthSubmitting}
-                onChange={handleCredentialChange}
+                credentials={credentials}
                 onSubmit={handleLogin}
+                onChange={handleCredentialChange}
+                onSendForgotPasswordOtp={async (payload) => {
+                  try {
+                    setIsAuthSubmitting(true);
+                    const response = await api.sendForgotPasswordOtp(payload);
+                    showNotice("success", response.message || "Password reset OTP sent.");
+                    return response;
+                  } catch (error) {
+                    showNotice("error", error.message || "Unable to send password reset OTP.");
+                    throw error;
+                  } finally {
+                    setIsAuthSubmitting(false);
+                  }
+                }}
+                onVerifyForgotPasswordOtp={async (payload) => {
+                  try {
+                    setIsAuthSubmitting(true);
+                    const response = await api.verifyForgotPasswordOtp(payload);
+                    showNotice("success", response.message || "Password reset OTP verified.");
+                    return response;
+                  } catch (error) {
+                    showNotice("error", error.message || "Unable to verify password reset OTP.");
+                    throw error;
+                  } finally {
+                    setIsAuthSubmitting(false);
+                  }
+                }}
+                onResetForgotPassword={async (payload) => {
+                  try {
+                    setIsAuthSubmitting(true);
+                    const response = await api.resetForgotPassword(payload);
+                    showNotice("success", response.message || "Password reset successfully.");
+                    return response;
+                  } catch (error) {
+                    showNotice("error", error.message || "Unable to reset password.");
+                    throw error;
+                  } finally {
+                    setIsAuthSubmitting(false);
+                  }
+                }}
               />
             )
           }
@@ -573,6 +710,20 @@ function App() {
           }
         >
           <Route index element={<Navigate replace to={ADMIN_DEFAULT_ROUTE} />} />
+          <Route
+            path="users"
+            element={
+              <UsersPanel
+                currentUser={authSession.user}
+                loading={usersLoading}
+                onCreateUser={handleCreateUser}
+                onSendCurrentUserVerificationOtp={handleSendCurrentUserVerificationOtp}
+                onUpdateUser={handleUpdateUser}
+                onVerifyCurrentUserEmailOtp={handleVerifyCurrentUserEmailOtp}
+                users={users}
+              />
+            }
+          />
           <Route
             path="products"
             element={
