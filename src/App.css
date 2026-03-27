@@ -695,7 +695,7 @@
   overflow: hidden;
   padding: 24px;
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr) 220px;
+  grid-template-columns: 104px minmax(0, 1fr) 248px;
   gap: 22px;
   align-items: center;
   border: 1px solid rgba(124, 104, 54, 0.16);
@@ -881,6 +881,10 @@
   gap: 12px;
 }
 
+.product-meta-grid-secondary {
+  margin-top: 0;
+}
+
 .product-meta-pill {
   padding: 14px 16px;
   border-radius: 18px;
@@ -950,6 +954,10 @@
 .product-price-breakdown {
   display: grid;
   gap: 10px;
+}
+
+.product-price-breakdown-dense {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .product-price-stat {

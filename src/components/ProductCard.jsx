@@ -26,16 +26,25 @@ export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStat
   const categoryNames = Array.isArray(product.category)
     ? product.category.map((item) => item.name).filter(Boolean)
     : [];
-  const effectivePrice = product.discountPrice ?? product.actualPrice;
+  const selectedPricing = product.selectedPricing || null;
+  const effectivePrice = selectedPricing?.currentPrice ?? product.discountPrice ?? product.actualPrice;
+  const actualPrice = selectedPricing?.actualPrice ?? product.actualPrice;
+  const discountPrice = selectedPricing?.discountPrice ?? product.discountPrice ?? effectivePrice;
   const pricePerCapsule =
-    typeof product.pricePerCapsule === "number" && !Number.isNaN(product.pricePerCapsule)
+    selectedPricing?.pricePerCapsule ??
+    (typeof product.pricePerCapsule === "number" && !Number.isNaN(product.pricePerCapsule)
       ? product.pricePerCapsule
       : typeof effectivePrice === "number" &&
           !Number.isNaN(effectivePrice) &&
           typeof product.quantity === "number" &&
           product.quantity > 0
         ? Number((effectivePrice / product.quantity).toFixed(2))
-        : null;
+        : null);
+  const actualPricePerCapsule = selectedPricing?.actualPricePerCapsule ?? null;
+  const selectedQuantity = selectedPricing?.selectedQuantity ?? product.selectedQuantity ?? product.quantity;
+  const baseQuantity = selectedPricing?.baseQuantity ?? product.quantity;
+  const discountAmount = selectedPricing?.discountAmount ?? null;
+  const discountPercentage = selectedPricing?.discountPercentage ?? product.discountPercentage ?? 0;
   const descriptionPreview = getPlainText(product.description);
   const publicationStatus = product.publicationStatus || "published";
   const isDraft = publicationStatus === "draft";
@@ -74,12 +83,29 @@ export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStat
             <strong>{product.genericName}</strong>
           </div>
           <div className="product-meta-pill">
-            <span>Quantity</span>
-            <strong>{product.quantity} capsules</strong>
+            <span>Selected pack</span>
+            <strong>{selectedQuantity} capsules</strong>
           </div>
+          <div className="product-meta-pill">
+            <span>Base pack</span>
+            <strong>{baseQuantity} capsules</strong>
+          </div>
+        </div>
+
+        <div className="product-card-meta-grid product-meta-grid-secondary">
           <div className="product-meta-pill">
             <span>Dose</span>
             <strong>{product.dose}</strong>
+          </div>
+          <div className="product-meta-pill">
+            <span>Price / capsule</span>
+            <strong>{pricePerCapsule != null ? formatPrice(pricePerCapsule) : "Unavailable"}</strong>
+          </div>
+          <div className="product-meta-pill">
+            <span>Actual / capsule</span>
+            <strong>
+              {actualPricePerCapsule != null ? formatPrice(actualPricePerCapsule) : "Unavailable"}
+            </strong>
           </div>
         </div>
 
@@ -98,21 +124,39 @@ export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStat
         <div className="product-card-pricing">
           <span className="product-price-label">Current price</span>
           <strong>{formatPrice(effectivePrice)}</strong>
-          {product.discountPercentage ? (
-            <span className="product-discount-note">{product.discountPercentage}% off</span>
+          {discountPercentage ? (
+            <span className="product-discount-note">{discountPercentage}% off</span>
           ) : (
             <span className="product-discount-note">No active discount</span>
           )}
         </div>
 
-        <div className="product-price-breakdown">
+        <div className="product-price-breakdown product-price-breakdown-dense">
           <div className="product-price-stat">
             <span>Actual price</span>
-            <strong>{formatPrice(product.actualPrice)}</strong>
+            <strong>{formatPrice(actualPrice)}</strong>
+          </div>
+          <div className="product-price-stat">
+            <span>Discount price</span>
+            <strong>{formatPrice(discountPrice)}</strong>
+          </div>
+          <div className="product-price-stat">
+            <span>Discount amount</span>
+            <strong>{discountAmount != null ? formatPrice(discountAmount) : "Unavailable"}</strong>
           </div>
           <div className="product-price-stat">
             <span>Price per capsule</span>
             <strong>{pricePerCapsule != null ? formatPrice(pricePerCapsule) : "Unavailable"}</strong>
+          </div>
+          <div className="product-price-stat">
+            <span>Actual per capsule</span>
+            <strong>
+              {actualPricePerCapsule != null ? formatPrice(actualPricePerCapsule) : "Unavailable"}
+            </strong>
+          </div>
+          <div className="product-price-stat">
+            <span>Pack mapping</span>
+            <strong>{baseQuantity} to {selectedQuantity}</strong>
           </div>
         </div>
 
