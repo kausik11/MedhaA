@@ -373,8 +373,8 @@ export const api = {
       method: "DELETE",
     });
   },
-  getOrders() {
-    return request("/orders");
+  getOrders(params = {}) {
+    return request(`/orders${buildQueryString(params)}`);
   },
   getOrderStatusByOrderId(orderId) {
     return request(`/orders/order-id/${encodeURIComponent(orderId)}/status`);
