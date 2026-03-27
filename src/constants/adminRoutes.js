@@ -46,6 +46,17 @@ export const ADMIN_ROUTES = [
     statKey: "offers",
   },
   {
+    id: "testimonials",
+    path: "/testimonials",
+    label: "Testimonials",
+    eyebrow: "Reputation",
+    description: "Manage testimonial quotes, ratings, and profile images shown to customers.",
+    headerTitle: "Testimonials workspace",
+    headerSubtitle:
+      "Create, update, and remove customer testimonials with image uploads and rating controls.",
+    statKey: "testimonials",
+  },
+  {
     id: "addresses",
     path: "/addresses",
     label: "Addresses",

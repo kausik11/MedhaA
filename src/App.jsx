@@ -11,6 +11,7 @@ import { OffersPanel } from "./components/OffersPanel";
 import { OrdersPanel } from "./components/OrdersPanel";
 import { OrderStatusPanel } from "./components/OrderStatusPanel";
 import { ProductsPanel } from "./components/ProductsPanel";
+import { TestimonialsPanel } from "./components/TestimonialsPanel";
 import { UsersPanel } from "./components/UsersPanel";
 import { LoginScreen } from "./components/LoginScreen";
 import {
@@ -31,12 +32,14 @@ function App() {
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [offersLoading, setOffersLoading] = useState(true);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
   const [addressesLoading, setAddressesLoading] = useState(true);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -105,6 +108,7 @@ function App() {
         setUsersLoading(true);
         setCategoriesLoading(true);
         setOffersLoading(true);
+        setTestimonialsLoading(true);
         setAddressesLoading(true);
         setOrdersLoading(true);
       } else {  
@@ -112,11 +116,20 @@ function App() {
       }
 
       try {
-        const [productsData, usersData, categoriesData, offersData, addressesData, ordersData] = await Promise.all([
+        const [
+          productsData,
+          usersData,
+          categoriesData,
+          offersData,
+          testimonialsData,
+          addressesData,
+          ordersData,
+        ] = await Promise.all([
           api.getProducts(),
           api.getUsers(),
           api.getProductCategories(),
           api.getOffers(),
+          api.getTestimonials(),
           api.getAddresses(),
           api.getOrders(),
         ]);
@@ -129,6 +142,7 @@ function App() {
         setUsers(Array.isArray(usersData) ? usersData : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setOffers(Array.isArray(offersData) ? offersData : []);
+        setTestimonials(Array.isArray(testimonialsData) ? testimonialsData : []);
         setAddresses(Array.isArray(addressesData) ? addressesData : []);
         setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (error) {
@@ -140,6 +154,7 @@ function App() {
             setUsers([]);
             setCategories([]);
             setOffers([]);
+            setTestimonials([]);
             setAddresses([]);
             setOrders([]);
             showNotice("error", "Your admin session has expired. Please sign in again.");
@@ -153,6 +168,7 @@ function App() {
           setUsersLoading(false);
           setCategoriesLoading(false);
           setOffersLoading(false);
+          setTestimonialsLoading(false);
           setAddressesLoading(false);
           setOrdersLoading(false);
           setIsRefreshing(false);
@@ -206,6 +222,7 @@ function App() {
     setUsers([]);
     setCategories([]);
     setOffers([]);
+    setTestimonials([]);
     setAddresses([]);
     setOrders([]);
     setIsProductModalOpen(false);
@@ -512,6 +529,65 @@ function App() {
     }
   };
 
+  const handleGetTestimonialById = async (testimonialId) => {
+    try {
+      return await api.getTestimonialById(testimonialId);
+    } catch (error) {
+      showNotice("error", error.message || "Unable to load testimonial details.");
+      throw error;
+    }
+  };
+
+  const handleCreateTestimonial = async (formData) => {
+    try {
+      const createdTestimonial = await api.createTestimonial(formData);
+      setTestimonials((current) => [createdTestimonial, ...current]);
+      showNotice("success", "Testimonial created successfully.");
+      return createdTestimonial;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to create testimonial.");
+      throw error;
+    }
+  };
+
+  const handleUpdateTestimonial = async (testimonialId, formData) => {
+    try {
+      const updatedTestimonial = await api.updateTestimonial(testimonialId, formData);
+      setTestimonials((current) =>
+        current.map((testimonial) =>
+          testimonial._id === testimonialId ? updatedTestimonial : testimonial
+        )
+      );
+      showNotice("success", "Testimonial updated successfully.");
+      return updatedTestimonial;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update testimonial.");
+      throw error;
+    }
+  };
+
+  const handleDeleteTestimonial = async (testimonialId) => {
+    const confirmed = await confirmAction({
+      title: "Delete testimonial?",
+      message: "This will permanently remove the testimonial and its uploaded image.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.deleteTestimonial(testimonialId);
+      setTestimonials((current) =>
+        current.filter((testimonial) => testimonial._id !== testimonialId)
+      );
+      showNotice("success", "Testimonial deleted successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to delete testimonial.");
+      throw error;
+    }
+  };
+
   const handleCreateAddress = async (payload) => {
     try {
       const createdAddress = await api.createAddress(payload);
@@ -629,6 +705,7 @@ function App() {
     users: users.length,
     categories: categories.length,
     offers: offers.length,
+    testimonials: testimonials.length,
     addresses: addresses.length,
     orders: orders.length,
   };
@@ -765,6 +842,19 @@ function App() {
                 onCreateOffer={handleCreateOffer}
                 onDeleteOffer={handleDeleteOffer}
                 onUpdateOffer={handleUpdateOffer}
+              />
+            }
+          />
+          <Route
+            path="testimonials"
+            element={
+              <TestimonialsPanel
+                loading={testimonialsLoading}
+                onCreateTestimonial={handleCreateTestimonial}
+                onDeleteTestimonial={handleDeleteTestimonial}
+                onGetTestimonialById={handleGetTestimonialById}
+                onUpdateTestimonial={handleUpdateTestimonial}
+                testimonials={testimonials}
               />
             }
           />

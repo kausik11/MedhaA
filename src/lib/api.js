@@ -290,6 +290,29 @@ export const api = {
       method: "DELETE",
     });
   },
+  getTestimonials() {
+    return request("/testimonials");
+  },
+  getTestimonialById(testimonialId) {
+    return request(`/testimonials/${testimonialId}`);
+  },
+  createTestimonial(formData) {
+    return request("/testimonials", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  updateTestimonial(testimonialId, formData) {
+    return request(`/testimonials/${testimonialId}`, {
+      method: "PUT",
+      body: formData,
+    });
+  },
+  deleteTestimonial(testimonialId) {
+    return request(`/testimonials/${testimonialId}`, {
+      method: "DELETE",
+    });
+  },
   getAddresses() {
     return request("/addresses");
   },

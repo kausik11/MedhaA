@@ -589,6 +589,34 @@
   min-height: 50px;
 }
 
+.testimonial-filter-bar {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+}
+
+.testimonial-search-shell {
+  position: relative;
+}
+
+.testimonial-search-shell input {
+  padding-left: 42px;
+}
+
+.testimonial-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #6b7d67;
+  pointer-events: none;
+}
+
+.testimonial-filter-summary {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+}
+
 .category-create-bar {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
@@ -1019,6 +1047,85 @@
   gap: 10px 16px;
   color: #516453;
   font-size: 0.95rem;
+}
+
+.testimonial-card {
+  align-items: flex-start;
+}
+
+.testimonial-card-main {
+  gap: 16px;
+}
+
+.testimonial-media {
+  display: flex;
+  align-items: flex-start;
+}
+
+.testimonial-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.testimonial-image,
+.testimonial-image-placeholder,
+.testimonial-preview-image {
+  object-fit: cover;
+  border-radius: 22px;
+  border: 1px solid rgba(31, 44, 32, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.testimonial-image,
+.testimonial-image-placeholder {
+  width: 88px;
+  height: 88px;
+}
+
+.testimonial-image-placeholder {
+  display: grid;
+  place-items: center;
+  color: #516453;
+}
+
+.testimonial-message {
+  margin: 0;
+  color: #4f5d4b;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.testimonial-modal-shell {
+  width: min(980px, calc(100vw - 24px));
+}
+
+.testimonial-preview-shell {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.testimonial-preview-shell span {
+  font-size: 0.9rem;
+  color: #43533f;
+}
+
+.testimonial-preview-image {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1 / 1;
+}
+
+.testimonial-preview-copy {
+  min-height: 52px;
+  padding: 14px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 16px;
+  border: 1px dashed rgba(31, 44, 32, 0.18);
+  color: #516453;
+  background: rgba(255, 255, 255, 0.58);
 }
 
 .order-list {
