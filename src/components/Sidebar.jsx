@@ -1,4 +1,4 @@
-import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiMapPin, FiMessageSquare, FiPackage, FiSearch, FiTag, FiUsers } from "react-icons/fi";
+import { FiBox, FiChevronLeft, FiChevronRight, FiGrid, FiMapPin, FiMessageSquare, FiPackage, FiSearch, FiShoppingCart, FiTag, FiUsers } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import { ADMIN_ROUTES } from "../constants/adminRoutes";
 
@@ -9,6 +9,7 @@ const navIcons = {
   offers: FiTag,
   testimonials: FiMessageSquare,
   addresses: FiMapPin,
+  cart: FiShoppingCart,
   orders: FiPackage,
   orderStatus: FiSearch,
 };

@@ -313,6 +313,40 @@ export const api = {
       method: "DELETE",
     });
   },
+  getCart() {
+    return request("/cart");
+  },
+  getAllCarts() {
+    return request("/cart/all");
+  },
+  addCartItem(payload) {
+    return request("/cart/items", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  updateCartItem(productId, payload, params = {}) {
+    return request(`/cart/items/${productId}${buildQueryString(params)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  removeCartItem(productId, params = {}) {
+    return request(`/cart/items/${productId}${buildQueryString(params)}`, {
+      method: "DELETE",
+    });
+  },
+  clearCart() {
+    return request("/cart", {
+      method: "DELETE",
+    });
+  },
   getAddresses() {
     return request("/addresses");
   },

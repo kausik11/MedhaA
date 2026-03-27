@@ -6,6 +6,7 @@ import "./App.css";
 import { ConfirmToast } from "./components/ConfirmToast";
 import { AdminShell } from "./components/AdminShell";
 import { CategoriesPanel } from "./components/CategoriesPanel";
+import { CartPanel } from "./components/CartPanel";
 import { AddressesPanel } from "./components/AddressesPanel";
 import { OffersPanel } from "./components/OffersPanel";
 import { OrdersPanel } from "./components/OrdersPanel";
@@ -33,6 +34,7 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [offers, setOffers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [cart, setCart] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -40,6 +42,7 @@ function App() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [offersLoading, setOffersLoading] = useState(true);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
+  const [cartLoading, setCartLoading] = useState(true);
   const [addressesLoading, setAddressesLoading] = useState(true);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -109,6 +112,7 @@ function App() {
         setCategoriesLoading(true);
         setOffersLoading(true);
         setTestimonialsLoading(true);
+        setCartLoading(true);
         setAddressesLoading(true);
         setOrdersLoading(true);
       } else {  
@@ -122,6 +126,7 @@ function App() {
           categoriesData,
           offersData,
           testimonialsData,
+          cartData,
           addressesData,
           ordersData,
         ] = await Promise.all([
@@ -130,6 +135,7 @@ function App() {
           api.getProductCategories(),
           api.getOffers(),
           api.getTestimonials(),
+          api.getAllCarts(),
           api.getAddresses(),
           api.getOrders(),
         ]);
@@ -143,6 +149,7 @@ function App() {
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setOffers(Array.isArray(offersData) ? offersData : []);
         setTestimonials(Array.isArray(testimonialsData) ? testimonialsData : []);
+        setCart(Array.isArray(cartData) ? cartData : cartData && typeof cartData === "object" ? cartData : null);
         setAddresses(Array.isArray(addressesData) ? addressesData : []);
         setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (error) {
@@ -155,6 +162,7 @@ function App() {
             setCategories([]);
             setOffers([]);
             setTestimonials([]);
+            setCart(null);
             setAddresses([]);
             setOrders([]);
             showNotice("error", "Your admin session has expired. Please sign in again.");
@@ -169,6 +177,7 @@ function App() {
           setCategoriesLoading(false);
           setOffersLoading(false);
           setTestimonialsLoading(false);
+          setCartLoading(false);
           setAddressesLoading(false);
           setOrdersLoading(false);
           setIsRefreshing(false);
@@ -223,6 +232,7 @@ function App() {
     setCategories([]);
     setOffers([]);
     setTestimonials([]);
+    setCart(null);
     setAddresses([]);
     setOrders([]);
     setIsProductModalOpen(false);
@@ -632,6 +642,70 @@ function App() {
     }
   };
 
+  const handleAddCartItem = async (payload) => {
+    try {
+      const updatedCart = await api.addCartItem(payload);
+      setCart(updatedCart);
+      showNotice("success", "Cart item added successfully.");
+      return updatedCart;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to add cart item.");
+      throw error;
+    }
+  };
+
+  const handleUpdateCartItem = async (productId, payload) => {
+    try {
+      const updatedCart = await api.updateCartItem(
+        productId,
+        payload,
+        payload?.selectedQuantity ? { selectedQuantity: payload.selectedQuantity } : {}
+      );
+      setCart(updatedCart);
+      showNotice("success", "Cart item updated successfully.");
+      return updatedCart;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update cart item.");
+      throw error;
+    }
+  };
+
+  const handleRemoveCartItem = async (productId, selectedQuantity) => {
+    try {
+      const updatedCart = await api.removeCartItem(
+        productId,
+        selectedQuantity ? { selectedQuantity } : {}
+      );
+      setCart(updatedCart);
+      showNotice("success", "Cart item removed successfully.");
+      return updatedCart;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to remove cart item.");
+      throw error;
+    }
+  };
+
+  const handleClearCart = async () => {
+    const confirmed = await confirmAction({
+      title: "Clear cart?",
+      message: "This will remove every line from the signed-in admin cart.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const clearedCart = await api.clearCart();
+      setCart(clearedCart);
+      showNotice("success", "Cart cleared successfully.");
+      return clearedCart;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to clear cart.");
+      throw error;
+    }
+  };
+
   const handleCreateOrder = async (payload) => {
     try {
       const createdOrder = await api.createOrder(payload);
@@ -706,6 +780,9 @@ function App() {
     categories: categories.length,
     offers: offers.length,
     testimonials: testimonials.length,
+    cart: Array.isArray(cart)
+      ? cart.reduce((total, cartEntry) => total + (cartEntry?.itemCount || 0), 0)
+      : cart?.itemCount || 0,
     addresses: addresses.length,
     orders: orders.length,
   };
@@ -867,6 +944,16 @@ function App() {
                 onCreateAddress={handleCreateAddress}
                 onDeleteAddress={handleDeleteAddress}
                 onUpdateAddress={handleUpdateAddress}
+              />
+            }
+          />
+          <Route
+            path="cart"
+            element={
+              <CartPanel
+                cart={cart}
+                currentUser={currentUser}
+                loading={cartLoading}
               />
             }
           />

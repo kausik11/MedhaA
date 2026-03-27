@@ -68,6 +68,17 @@ export const ADMIN_ROUTES = [
     statKey: "addresses",
   },
   {
+    id: "cart",
+    path: "/cart",
+    label: "Cart",
+    eyebrow: "Checkout",
+    description: "Test authenticated cart lines, pack sizes, and price calculations.",
+    headerTitle: "Cart workspace",
+    headerSubtitle:
+      "Add products to the signed-in admin cart, change pack sizes, and verify backend totals.",
+    statKey: "cart",
+  },
+  {
     id: "orders",
     path: "/orders",
     label: "Orders",
