@@ -17,6 +17,7 @@ import {
   api,
   clearAuthSession,
   getAuthSession,
+  normalizeAuthSession,
   setAuthSession,
 } from "./lib/api";
 import { ADMIN_DEFAULT_ROUTE } from "./constants/adminRoutes";
@@ -44,6 +45,15 @@ function App() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isProductSubmitting, setIsProductSubmitting] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const currentUser = authSession?.user ?? null;
+  const isAuthenticated = Boolean(authSession?.token && currentUser);
+
+  const syncAuthSession = (session) => {
+    const nextSession = normalizeAuthSession(session);
+    setAuthSession(nextSession);
+    setAuthSessionState(nextSession);
+    return nextSession;
+  };
 
   const showNotice = (type, message) => {
     if (type === "error") {
@@ -171,13 +181,13 @@ function App() {
 
     try {
       const response = await api.login(credentials);
-      const nextSession = {
+      const nextSession = syncAuthSession({
         token: response.token,
         user: response.user,
-      };
-
-      setAuthSession(nextSession);
-      setAuthSessionState(nextSession);
+      });
+      if (!nextSession) {
+        throw new Error("Invalid admin session received from the server.");
+      }
       setCredentials({ email: "", password: "" });
       navigate(ADMIN_DEFAULT_ROUTE, { replace: true });
       showNotice("success", "Admin session started.");
@@ -341,12 +351,10 @@ function App() {
       );
 
       if (authSession?.user?._id === userId) {
-        const nextSession = {
+        syncAuthSession({
           ...authSession,
           user: updatedUser,
-        };
-        setAuthSession(nextSession);
-        setAuthSessionState(nextSession);
+        });
       }
 
       showNotice("success", "User updated successfully.");
@@ -379,12 +387,10 @@ function App() {
         );
 
         if (authSession?.token) {
-          const nextSession = {
+          syncAuthSession({
             ...authSession,
             user: updatedUser,
-          };
-          setAuthSession(nextSession);
-          setAuthSessionState(nextSession);
+          });
         }
       }
 
@@ -633,7 +639,7 @@ function App() {
         <Route
           path="/login"
           element={
-            authSession?.token ? (
+            isAuthenticated ? (
               <Navigate replace to={ADMIN_DEFAULT_ROUTE} />
             ) : (
               <LoginScreen
@@ -687,7 +693,7 @@ function App() {
         <Route
           path="/"
           element={
-            authSession?.token ? (
+            isAuthenticated ? (
               <AdminShell
                 categories={categories}
                 editingProduct={editingProduct}
@@ -702,7 +708,7 @@ function App() {
                 onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
                 setIsSidebarCollapsed={setIsSidebarCollapsed}
                 stats={stats}
-                user={authSession.user}
+                user={currentUser}
               />
             ) : (
               <Navigate replace to="/login" />
@@ -714,7 +720,7 @@ function App() {
             path="users"
             element={
               <UsersPanel
-                currentUser={authSession.user}
+                currentUser={currentUser}
                 loading={usersLoading}
                 onCreateUser={handleCreateUser}
                 onSendCurrentUserVerificationOtp={handleSendCurrentUserVerificationOtp}
@@ -793,7 +799,7 @@ function App() {
         </Route>
         <Route
           path="*"
-          element={<Navigate replace to={authSession?.token ? ADMIN_DEFAULT_ROUTE : "/login"} />}
+          element={<Navigate replace to={isAuthenticated ? ADMIN_DEFAULT_ROUTE : "/login"} />}
         />
       </Routes>
       <ToastContainer

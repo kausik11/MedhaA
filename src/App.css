@@ -561,6 +561,34 @@
   grid-template-columns: minmax(0, 1fr) 220px 220px;
 }
 
+.users-filter-bar {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+}
+
+.users-search-shell {
+  position: relative;
+}
+
+.users-search-shell input {
+  padding-left: 42px;
+}
+
+.users-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #6b7d67;
+  pointer-events: none;
+}
+
+.users-filter-summary {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+}
+
 .category-create-bar {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;

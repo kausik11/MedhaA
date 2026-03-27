@@ -5,6 +5,24 @@ const AUTH_STORAGE_KEY = "medha_admin_auth";
 
 let authSession = loadStoredSession();
 
+function normalizeSession(session) {
+  if (!session || typeof session !== "object") {
+    return null;
+  }
+
+  const token = typeof session.token === "string" ? session.token.trim() : "";
+  const user = session.user && typeof session.user === "object" ? session.user : null;
+
+  if (!token || !user) {
+    return null;
+  }
+
+  return {
+    token,
+    user,
+  };
+}
+
 function loadStoredSession() {
   if (typeof window === "undefined") {
     return null;
@@ -16,12 +34,7 @@ function loadStoredSession() {
       return null;
     }
 
-    const parsed = JSON.parse(raw);
-    if (!parsed?.token || !parsed?.user) {
-      return null;
-    }
-
-    return parsed;
+    return normalizeSession(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -31,8 +44,12 @@ export function getAuthSession() {
   return authSession;
 }
 
+export function normalizeAuthSession(session) {
+  return normalizeSession(session);
+}
+
 export function setAuthSession(session) {
-  authSession = session && session.token && session.user ? session : null;
+  authSession = normalizeSession(session);
 
   if (typeof window === "undefined") {
     return;

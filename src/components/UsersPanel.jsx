@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { FiCheck, FiMail, FiPlus, FiRefreshCw, FiShield, FiUser, FiX } from "react-icons/fi";
+import { useDeferredValue, useMemo, useState } from "react";
+import { FiCheck, FiMail, FiPlus, FiRefreshCw, FiSearch, FiShield, FiUser, FiX } from "react-icons/fi";
 
 const USER_ROLES = ["normal", "administrator", "superadmin"];
 
@@ -13,6 +13,60 @@ const EMPTY_USER_FORM = {
   password: "",
   role: "normal",
   userImage: null,
+};
+
+const normalizeSearchValue = (value) => `${value ?? ""}`.toLowerCase().trim();
+
+const compactSearchValue = (value) => normalizeSearchValue(value).replace(/[\s()+-]+/g, "");
+
+const getRoleAliases = (role) => {
+  const normalizedRole = normalizeSearchValue(role);
+
+  if (normalizedRole === "administrator") {
+    return ["admin"];
+  }
+
+  if (normalizedRole === "superadmin") {
+    return ["super admin", "super-admin", "admin"];
+  }
+
+  return [];
+};
+
+const matchesUserSearch = (user, query) => {
+  if (!query) {
+    return true;
+  }
+
+  const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+  const roleAliases = getRoleAliases(user?.role);
+  const fields = [
+    fullName,
+    user?.firstName,
+    user?.lastName,
+    user?.email,
+    user?.phoneNumber,
+    user?.role,
+    ...roleAliases,
+  ]
+    .filter(Boolean)
+    .map((value) => `${value}`);
+
+  const normalizedFields = fields.map(normalizeSearchValue);
+  const compactFields = fields.map(compactSearchValue);
+  const phoneDigits = `${user?.phoneNumber || ""}`.replace(/\D/g, "");
+  const tokens = normalizeSearchValue(query).split(/\s+/).filter(Boolean);
+
+  return tokens.every((token) => {
+    const compactToken = compactSearchValue(token);
+    const digitToken = token.replace(/\D/g, "");
+
+    return (
+      normalizedFields.some((field) => field.includes(token)) ||
+      compactFields.some((field) => field.includes(compactToken)) ||
+      (digitToken && phoneDigits.includes(digitToken))
+    );
+  });
 };
 
 export function UsersPanel({
@@ -36,6 +90,8 @@ export function UsersPanel({
   const [currentUserOtp, setCurrentUserOtp] = useState("");
   const [isSendingCurrentUserOtp, setIsSendingCurrentUserOtp] = useState(false);
   const [isVerifyingCurrentUserOtp, setIsVerifyingCurrentUserOtp] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const sortedUsers = useMemo(
     () =>
@@ -50,6 +106,11 @@ export function UsersPanel({
       }),
     [users]
   );
+  const filteredUsers = useMemo(
+    () => sortedUsers.filter((user) => matchesUserSearch(user, deferredSearchTerm)),
+    [deferredSearchTerm, sortedUsers]
+  );
+  const hasSearchTerm = Boolean(searchTerm.trim());
 
   const isEditMode = Boolean(editingUser?._id);
 
@@ -264,14 +325,45 @@ export function UsersPanel({
         ) : null}
       </article>
 
+      <div className="filter-bar users-filter-bar">
+        <label className="field-shell">
+          <span>Search users</span>
+          <div className="users-search-shell">
+            {/* <FiSearch className="users-search-icon" /> */}
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search name, email, phone, or role..."
+              aria-label="Search users by name, email, phone, or role"
+            />
+          </div>
+        </label>
+
+        <div className="users-filter-summary" aria-live="polite">
+          <span className="soft-chip">
+            {filteredUsers.length} of {sortedUsers.length} users
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="ghost-button"
+          onClick={() => setSearchTerm("")}
+          disabled={!hasSearchTerm}
+        >
+          Clear search
+        </button>
+      </div>
+
       {loading ? (
         <div className="empty-state">
           <h4>Loading users...</h4>
           <p>User accounts are being fetched from the backend.</p>
         </div>
-      ) : sortedUsers.length ? (
+      ) : filteredUsers.length ? (
         <div className="category-list">
-          {sortedUsers.map((user) => (
+          {filteredUsers.map((user) => (
             <article key={user._id} className="category-card address-card">
               <div className="category-card-main address-card-main">
                 {user.userImage ? (
@@ -312,6 +404,11 @@ export function UsersPanel({
               </div>
             </article>
           ))}
+        </div>
+      ) : sortedUsers.length ? (
+        <div className="empty-state">
+          <h4>No matching users</h4>
+          <p>Try a different name, email, phone number, or role.</p>
         </div>
       ) : (
         <div className="empty-state">
