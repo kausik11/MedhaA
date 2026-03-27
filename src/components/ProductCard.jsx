@@ -27,6 +27,15 @@ export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStat
     ? product.category.map((item) => item.name).filter(Boolean)
     : [];
   const effectivePrice = product.discountPrice ?? product.actualPrice;
+  const pricePerCapsule =
+    typeof product.pricePerCapsule === "number" && !Number.isNaN(product.pricePerCapsule)
+      ? product.pricePerCapsule
+      : typeof effectivePrice === "number" &&
+          !Number.isNaN(effectivePrice) &&
+          typeof product.quantity === "number" &&
+          product.quantity > 0
+        ? Number((effectivePrice / product.quantity).toFixed(2))
+        : null;
   const descriptionPreview = getPlainText(product.description);
   const publicationStatus = product.publicationStatus || "published";
   const isDraft = publicationStatus === "draft";
@@ -94,6 +103,17 @@ export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStat
           ) : (
             <span className="product-discount-note">No active discount</span>
           )}
+        </div>
+
+        <div className="product-price-breakdown">
+          <div className="product-price-stat">
+            <span>Actual price</span>
+            <strong>{formatPrice(product.actualPrice)}</strong>
+          </div>
+          <div className="product-price-stat">
+            <span>Price per capsule</span>
+            <strong>{pricePerCapsule != null ? formatPrice(pricePerCapsule) : "Unavailable"}</strong>
+          </div>
         </div>
 
         <div className="card-action-row">

@@ -947,6 +947,33 @@
   font-size: 0.95rem;
 }
 
+.product-price-breakdown {
+  display: grid;
+  gap: 10px;
+}
+
+.product-price-stat {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(214, 188, 121, 0.12);
+}
+
+.product-price-stat span {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #c8b17d;
+}
+
+.product-price-stat strong {
+  display: block;
+  margin-top: 6px;
+  color: #fff5d6;
+  font-size: 1.05rem;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
