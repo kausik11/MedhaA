@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { FiSave, FiX } from "react-icons/fi";
 import { RichTextEditor } from "./RichTextEditor";
 
+const PRODUCT_FORM_OPTIONS = [
+  { value: "capsule", label: "Capsule" },
+  { value: "tablet", label: "Tablet" },
+  { value: "liquid", label: "Liquid" },
+];
+
 const createInitialState = () => ({
   title: "",
   type: "vitamin",
@@ -41,6 +47,8 @@ const createFormState = (product) => {
     return createInitialState();
   }
 
+  const normalizedForm = `${product.extraInfo?.form || ""}`.trim().toLowerCase();
+
   return {
     title: product.title || "",
     type: product.type || "vitamin",
@@ -76,7 +84,9 @@ const createFormState = (product) => {
     avoid: product.extraInfo?.avoid || "",
     maximumBenefit: product.extraInfo?.maximumBenefit || "",
     effectiveWith: product.extraInfo?.effectiveWith || "",
-    form: product.extraInfo?.form || "",
+    form: PRODUCT_FORM_OPTIONS.some((option) => option.value === normalizedForm)
+      ? normalizedForm
+      : "",
     nonVegetarianSupplement: Boolean(product.nonVegetarianSupplement),
     publicationStatus: product.publicationStatus || "published",
   };
@@ -600,11 +610,17 @@ export function ProductFormModal({
             <div className="modal-grid">
               <label className="field-shell">
                 <span>Form</span>
-                <input
-                  type="text"
+                <select
                   value={formState.form}
                   onChange={(event) => updateField("form", event.target.value)}
-                />
+                >
+                  <option value="">Select form</option>
+                  {PRODUCT_FORM_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
           </section>
