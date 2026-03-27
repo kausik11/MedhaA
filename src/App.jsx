@@ -137,7 +137,7 @@ function App() {
           api.getTestimonials(),
           api.getAllCarts(),
           api.getAddresses(),
-          api.getOrders(),
+          api.getOrders({ includeArchived: true }),
         ]);
 
         if (isCancelled) {
@@ -710,9 +710,36 @@ function App() {
     try {
       const createdOrder = await api.createOrder(payload);
       setOrders((current) => [createdOrder, ...current]);
+      try {
+        const cartData = await api.getAllCarts();
+        setCart(
+          Array.isArray(cartData)
+            ? cartData
+            : cartData && typeof cartData === "object"
+              ? cartData
+              : null
+        );
+      } catch (cartRefreshError) {
+        console.error("Unable to refresh cart overview after order creation:", cartRefreshError);
+      }
       showNotice("success", "Order created successfully.");
+      return createdOrder;
     } catch (error) {
       showNotice("error", error.message || "Unable to create order.");
+      throw error;
+    }
+  };
+
+  const handleUpdateOrder = async (orderId, payload) => {
+    try {
+      const updatedOrder = await api.updateOrder(orderId, payload);
+      setOrders((current) =>
+        current.map((order) => (order._id === orderId ? updatedOrder : order))
+      );
+      showNotice("success", "Order updated successfully.");
+      return updatedOrder;
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update order.");
       throw error;
     }
   };
@@ -732,8 +759,8 @@ function App() {
 
   const handleDeleteOrder = async (orderId) => {
     const confirmed = await confirmAction({
-      title: "Delete order?",
-      message: "This will permanently remove the order from the backend.",
+      title: "Archive order?",
+      message: "This will soft delete the order and hide it from the active admin list.",
     });
 
     if (!confirmed) {
@@ -741,11 +768,18 @@ function App() {
     }
 
     try {
-      await api.deleteOrder(orderId);
-      setOrders((current) => current.filter((order) => order._id !== orderId));
-      showNotice("success", "Order deleted successfully.");
+      const response = await api.deleteOrder(orderId);
+      const archivedOrder = response?.order;
+      if (archivedOrder?._id) {
+        setOrders((current) =>
+          current.map((order) =>
+            order._id === orderId ? { ...order, ...archivedOrder } : order
+          )
+        );
+      }
+      showNotice("success", "Order archived successfully.");
     } catch (error) {
-      showNotice("error", error.message || "Unable to delete order.");
+      showNotice("error", error.message || "Unable to archive order.");
       throw error;
     }
   };
@@ -966,8 +1000,10 @@ function App() {
                 offers={offers}
                 orders={orders}
                 products={products}
+                users={users}
                 onCreateOrder={handleCreateOrder}
                 onDeleteOrder={handleDeleteOrder}
+                onUpdateOrder={handleUpdateOrder}
                 onUpdateOrderStatus={handleUpdateOrderStatus}
               />
             }

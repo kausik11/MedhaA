@@ -388,6 +388,15 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  updateOrder(orderId, payload) {
+    return request(`/orders/${orderId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
   updateOrderStatus(orderId, payload) {
     return request(`/orders/${orderId}/status`, {
       method: "PATCH",
