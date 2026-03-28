@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { FiMapPin, FiPlus, FiRefreshCw, FiTrash2, FiX } from "react-icons/fi";
+import { FiMapPin, FiPlus, FiRefreshCw, FiTrash2, FiUser, FiX } from "react-icons/fi";
 
-const EMPTY_FORM = {
+const createEmptyForm = () => ({
+  userId: "",
   fullName: "",
   mobileNumber: "",
   alternateMobileNumber: "",
@@ -12,6 +13,25 @@ const EMPTY_FORM = {
   street: "",
   city: "",
   landmark: "",
+});
+
+const getAddressUserId = (address) => {
+  const value = address?.user;
+
+  if (value && typeof value === "object") {
+    return value._id || "";
+  }
+
+  return value || "";
+};
+
+const getUserLabel = (user) => {
+  if (!user || typeof user !== "object") {
+    return "Unknown user";
+  }
+
+  const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+  return fullName || user.email || "Unknown user";
 };
 
 export function AddressesPanel({
@@ -20,11 +40,15 @@ export function AddressesPanel({
   onCreateAddress,
   onDeleteAddress,
   onUpdateAddress,
+  users = [],
 }) {
-  const [formState, setFormState] = useState(EMPTY_FORM);
+  const [formState, setFormState] = useState(() => createEmptyForm());
   const [editingId, setEditingId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const sortedUsers = [...users].sort((left, right) =>
+    getUserLabel(left).localeCompare(getUserLabel(right))
+  );
 
   const updateField = (field, value) => {
     setFormState((current) => ({
@@ -34,7 +58,7 @@ export function AddressesPanel({
   };
 
   const resetForm = () => {
-    setFormState(EMPTY_FORM);
+    setFormState(createEmptyForm());
     setEditingId(null);
     setIsModalOpen(false);
   };
@@ -78,9 +102,10 @@ export function AddressesPanel({
         <button
           type="button"
           className="primary-button"
+          disabled={!sortedUsers.length}
           onClick={() => {
             setEditingId(null);
-            setFormState(EMPTY_FORM);
+            setFormState(createEmptyForm());
             setIsModalOpen(true);
           }}
         >
@@ -96,67 +121,79 @@ export function AddressesPanel({
         </div>
       ) : addresses.length ? (
         <div className="category-list">
-          {addresses.map((address) => (
-            <article key={address._id} className="category-card address-card">
-              <div className="category-card-main address-card-main">
-                <span className="eyebrow">Delivery address</span>
-                <h4>{address.fullName}</h4>
-                <div className="offer-meta-row">
-                  <span className="soft-chip">
-                    <FiMapPin className="button-icon" />
-                    {address.city}, {address.state}
-                  </span>
-                  <span className="soft-chip">{address.country}</span>
-                  <span className="soft-chip">{address.deliveryTime}</span>
-                </div>
-                <p className="address-card-copy">
-                  {address.houseNo}, {address.street}, {address.city}, {address.state}, {address.country} - {address.pincode}
-                </p>
-                <div className="address-card-copy-group">
-                  <span>Mobile: {address.mobileNumber}</span>
-                  {address.alternateMobileNumber ? (
-                    <span>Alt: {address.alternateMobileNumber}</span>
-                  ) : null}
-                  {address.landmark ? <span>Landmark: {address.landmark}</span> : null}
-                </div>
-              </div>
+          {addresses.map((address) => {
+            const addressUserId = getAddressUserId(address);
+            const assignedUser =
+              users.find((user) => user._id === addressUserId) ||
+              (address?.user && typeof address.user === "object" ? address.user : null);
 
-              <div className="category-actions">
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={() => {
-                    setEditingId(address._id);
-                    setFormState({
-                      fullName: address.fullName || "",
-                      mobileNumber: address.mobileNumber || "",
-                      alternateMobileNumber: address.alternateMobileNumber || "",
-                      pincode: address.pincode || "",
-                      state: address.state || "",
-                      country: address.country || "",
-                      houseNo: address.houseNo || "",
-                      street: address.street || "",
-                      city: address.city || "",
-                      landmark: address.landmark || "",
-                    });
-                    setIsModalOpen(true);
-                  }}
-                >
-                  <FiRefreshCw className="button-icon" />
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="ghost-danger-button"
-                  disabled={isSubmitting}
-                  onClick={() => handleDelete(address._id)}
-                >
-                  <FiTrash2 className="button-icon" />
-                  Delete
-                </button>
-              </div>
-            </article>
-          ))}
+            return (
+              <article key={address._id} className="category-card address-card">
+                <div className="category-card-main address-card-main">
+                  <span className="eyebrow">Delivery address</span>
+                  <h4>{address.fullName}</h4>
+                  <div className="offer-meta-row">
+                    <span className="soft-chip">
+                      <FiUser className="button-icon" />
+                      {getUserLabel(assignedUser)}
+                    </span>
+                    <span className="soft-chip">
+                      <FiMapPin className="button-icon" />
+                      {address.city}, {address.state}
+                    </span>
+                    <span className="soft-chip">{address.country}</span>
+                    <span className="soft-chip">{address.deliveryTime}</span>
+                  </div>
+                  <p className="address-card-copy">
+                    {address.houseNo}, {address.street}, {address.city}, {address.state}, {address.country} - {address.pincode}
+                  </p>
+                  <div className="address-card-copy-group">
+                    <span>Mobile: {address.mobileNumber}</span>
+                    {address.alternateMobileNumber ? (
+                      <span>Alt: {address.alternateMobileNumber}</span>
+                    ) : null}
+                    {address.landmark ? <span>Landmark: {address.landmark}</span> : null}
+                  </div>
+                </div>
+
+                <div className="category-actions">
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => {
+                      setEditingId(address._id);
+                      setFormState({
+                        userId: getAddressUserId(address),
+                        fullName: address.fullName || "",
+                        mobileNumber: address.mobileNumber || "",
+                        alternateMobileNumber: address.alternateMobileNumber || "",
+                        pincode: address.pincode || "",
+                        state: address.state || "",
+                        country: address.country || "",
+                        houseNo: address.houseNo || "",
+                        street: address.street || "",
+                        city: address.city || "",
+                        landmark: address.landmark || "",
+                      });
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <FiRefreshCw className="button-icon" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="ghost-danger-button"
+                    disabled={isSubmitting}
+                    onClick={() => handleDelete(address._id)}
+                  >
+                    <FiTrash2 className="button-icon" />
+                    Delete
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       ) : (
         <div className="empty-state">
@@ -188,9 +225,25 @@ export function AddressesPanel({
             <form className="modal-form" onSubmit={handleSubmit}>
               <div className="modal-section">
                 <div className="address-form-grid">
+                  <label className="field-shell address-form-span-2">
+                    <span>User</span>
+                    <select
+                      required
+                      value={formState.userId}
+                      onChange={(event) => updateField("userId", event.target.value)}
+                    >
+                      <option value="">Select user</option>
+                      {sortedUsers.map((user) => (
+                        <option key={user._id} value={user._id}>
+                          {getUserLabel(user)}{user.email ? ` (${user.email})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <label className="field-shell">
                     <span>Full name</span>
                     <input
+                      required
                       type="text"
                       value={formState.fullName}
                       onChange={(event) => updateField("fullName", event.target.value)}
@@ -199,6 +252,7 @@ export function AddressesPanel({
                   <label className="field-shell">
                     <span>Mobile number</span>
                     <input
+                      required
                       type="text"
                       value={formState.mobileNumber}
                       onChange={(event) => updateField("mobileNumber", event.target.value)}
@@ -215,6 +269,7 @@ export function AddressesPanel({
                   <label className="field-shell">
                     <span>Pincode</span>
                     <input
+                      required
                       type="text"
                       value={formState.pincode}
                       onChange={(event) => updateField("pincode", event.target.value)}
@@ -223,6 +278,7 @@ export function AddressesPanel({
                   <label className="field-shell">
                     <span>State</span>
                     <input
+                      required
                       type="text"
                       value={formState.state}
                       onChange={(event) => updateField("state", event.target.value)}
@@ -231,6 +287,7 @@ export function AddressesPanel({
                   <label className="field-shell">
                     <span>Country</span>
                     <input
+                      required
                       type="text"
                       value={formState.country}
                       onChange={(event) => updateField("country", event.target.value)}
@@ -239,6 +296,7 @@ export function AddressesPanel({
                   <label className="field-shell">
                     <span>House no</span>
                     <input
+                      required
                       type="text"
                       value={formState.houseNo}
                       onChange={(event) => updateField("houseNo", event.target.value)}
@@ -247,6 +305,7 @@ export function AddressesPanel({
                   <label className="field-shell">
                     <span>Street</span>
                     <input
+                      required
                       type="text"
                       value={formState.street}
                       onChange={(event) => updateField("street", event.target.value)}
@@ -255,6 +314,7 @@ export function AddressesPanel({
                   <label className="field-shell">
                     <span>City</span>
                     <input
+                      required
                       type="text"
                       value={formState.city}
                       onChange={(event) => updateField("city", event.target.value)}
