@@ -33,6 +33,15 @@ const getRoleAliases = (role) => {
   return [];
 };
 
+const getUserLocationLabel = (user) => {
+  const location = user?.deliveryLocation;
+  if (!location?.city) {
+    return "";
+  }
+
+  return [location.city, location.pincode].filter(Boolean).join(", ");
+};
+
 const matchesUserSearch = (user, query) => {
   if (!query) {
     return true;
@@ -47,6 +56,10 @@ const matchesUserSearch = (user, query) => {
     user?.email,
     user?.phoneNumber,
     user?.role,
+    user?.deliveryLocation?.city,
+    user?.deliveryLocation?.pincode,
+    user?.deliveryLocation?.state,
+    user?.deliveryLocation?.country,
     ...roleAliases,
   ]
     .filter(Boolean)
@@ -390,6 +403,17 @@ export function UsersPanel({
                 <p className="address-card-copy">
                   {user.designation || "No designation"}{user.address ? `, ${user.address}` : ""}
                 </p>
+                {user.deliveryLocation ? (
+                  <div className="address-card-copy-group">
+                    <span>Current location: {getUserLocationLabel(user)}</span>
+                    <span>{user.deliveryLocation.state}, {user.deliveryLocation.country}</span>
+                    <span>
+                      Lat/Lng: {Number(user.deliveryLocation.latitude).toFixed(6)},{" "}
+                      {Number(user.deliveryLocation.longitude).toFixed(6)}
+                    </span>
+                    <span>{user.deliveryLocation.resolvedAddress}</span>
+                  </div>
+                ) : null}
               </div>
 
               <div className="category-actions">
@@ -572,6 +596,37 @@ export function UsersPanel({
                   </label>
                 </div>
               </div>
+
+              {isEditMode ? (
+                <div className="modal-section">
+                  <div className="modal-section-heading">
+                    <p className="eyebrow">Current location</p>
+                    <h4>User detected location</h4>
+                  </div>
+
+                  {editingUser?.deliveryLocation ? (
+                    <div className="address-card-copy-group">
+                      <span>City: {editingUser.deliveryLocation.city}</span>
+                      <span>Pincode: {editingUser.deliveryLocation.pincode}</span>
+                      <span>State: {editingUser.deliveryLocation.state}</span>
+                      <span>Country: {editingUser.deliveryLocation.country}</span>
+                      <span>
+                        Latitude: {Number(editingUser.deliveryLocation.latitude).toFixed(6)}
+                      </span>
+                      <span>
+                        Longitude: {Number(editingUser.deliveryLocation.longitude).toFixed(6)}
+                      </span>
+                      <span>
+                        Resolved address: {editingUser.deliveryLocation.resolvedAddress}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="notice-banner">
+                      <span>No current location has been detected and saved for this user yet.</span>
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
               <div className="modal-actions">
                 <button type="button" className="ghost-button" onClick={resetForm}>
