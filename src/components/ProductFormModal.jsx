@@ -39,6 +39,7 @@ const createInitialState = () => ({
   effectiveWith: "",
   form: "",
   nonVegetarianSupplement: false,
+  mostBought: false,
   publicationStatus: "draft",
 });
 
@@ -88,6 +89,7 @@ const createFormState = (product) => {
       ? normalizedForm
       : "",
     nonVegetarianSupplement: Boolean(product.nonVegetarianSupplement),
+    mostBought: Boolean(product.mostBought),
     publicationStatus: product.publicationStatus || "published",
   };
 };
@@ -159,6 +161,7 @@ export function ProductFormModal({
     payload.append("description", normalizeRichText(formState.description));
     payload.append("actualPrice", formState.actualPrice);
     payload.append("nonVegetarianSupplement", `${formState.nonVegetarianSupplement}`);
+    payload.append("mostBought", `${formState.mostBought}`);
     payload.append("publicationStatus", formState.publicationStatus);
 
     if (formState.discountPercentage) {
@@ -371,6 +374,17 @@ export function ProductFormModal({
                   value={formState.discountPercentage}
                   onChange={(event) => updateField("discountPercentage", event.target.value)}
                 />
+              </label>
+
+              <label className="field-shell">
+                <span>Most bought</span>
+                <select
+                  value={formState.mostBought ? "true" : "false"}
+                  onChange={(event) => updateField("mostBought", event.target.value === "true")}
+                >
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
               </label>
 
               <label className="field-shell">
