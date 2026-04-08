@@ -8,6 +8,81 @@ const PRODUCT_FORM_OPTIONS = [
   { value: "liquid", label: "Liquid" },
 ];
 
+const PRODUCT_IMAGE_QUANTITY_OPTIONS = ["60", "90", "120"];
+const CREATE_IMAGE_FIELDS = ["60", "90", "120"];
+
+function ImageLightbox({ alt, imageUrl, onClose }) {
+  if (!imageUrl) {
+    return null;
+  }
+
+  return (
+    <div className="image-lightbox-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="image-lightbox-shell"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Image preview"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button type="button" className="ghost-button image-lightbox-close" onClick={onClose}>
+          <FiX className="button-icon" />
+          Close
+        </button>
+        <img className="image-lightbox-image" src={imageUrl} alt={alt} />
+      </div>
+    </div>
+  );
+}
+
+function FileImagePreviewRow({ files, altPrefix, onOpenImage }) {
+  const [previewUrls, setPreviewUrls] = useState([]);
+
+  useEffect(() => {
+    if (!Array.isArray(files) || files.length === 0) {
+      setPreviewUrls([]);
+      return undefined;
+    }
+
+    const nextPreviewUrls = files.map((file) => ({
+      key: `${file.name}-${file.lastModified}-${file.size}`,
+      name: file.name,
+      url: URL.createObjectURL(file),
+    }));
+
+    setPreviewUrls(nextPreviewUrls);
+
+    return () => {
+      nextPreviewUrls.forEach((item) => {
+        URL.revokeObjectURL(item.url);
+      });
+    };
+  }, [files]);
+
+  if (!previewUrls.length) {
+    return null;
+  }
+
+  return (
+    <div className="modal-image-row">
+      {previewUrls.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          className="image-thumb-button"
+          onClick={() => onOpenImage(item.url, `${altPrefix} ${item.name}`)}
+        >
+          <img
+            className="modal-image-thumb"
+            src={item.url}
+            alt={`${altPrefix} ${item.name}`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const createInitialState = () => ({
   title: "",
   type: "vitamin",
@@ -27,7 +102,11 @@ const createInitialState = () => ({
   metadata: "",
   supportInfo: "",
   category: [],
-  images: [],
+  imagesByQuantity: {
+    60: [],
+    90: [],
+    120: [],
+  },
   countryOfOrigin: "",
   manufacturingGenericName: "",
   marketedBy: "",
@@ -75,7 +154,11 @@ const createFormState = (product) => {
     metadata: Array.isArray(product.metadata) ? product.metadata.join(", ") : "",
     supportInfo: Array.isArray(product.supportInfo) ? product.supportInfo.join(", ") : "",
     category: Array.isArray(product.category) ? product.category.map((item) => item._id) : [],
-    images: [],
+    imagesByQuantity: {
+      60: [],
+      90: [],
+      120: [],
+    },
     countryOfOrigin: product.manufacturingDetails?.countryOfOrigin || "",
     manufacturingGenericName: product.manufacturingDetails?.genericName || "",
     marketedBy: product.manufacturingDetails?.marketedBy || "",
@@ -103,6 +186,7 @@ export function ProductFormModal({
   onSubmit,
 }) {
   const [formState, setFormState] = useState(createInitialState);
+  const [lightboxImage, setLightboxImage] = useState(null);
   const isEditMode = Boolean(product?._id);
 
   const normalizeRichText = (value) => {
@@ -122,6 +206,7 @@ export function ProductFormModal({
   useEffect(() => {
     if (isOpen) {
       setFormState(createFormState(product));
+      setLightboxImage(null);
     }
   }, [isOpen, product]);
 
@@ -136,6 +221,16 @@ export function ProductFormModal({
     }));
   };
 
+  const updateImagesByQuantity = (quantity, files) => {
+    setFormState((current) => ({
+      ...current,
+      imagesByQuantity: {
+        ...current.imagesByQuantity,
+        [quantity]: files,
+      },
+    }));
+  };
+
   const toggleCategory = (categoryId) => {
     setFormState((current) => {
       const nextCategories = current.category.includes(categoryId)
@@ -146,6 +241,13 @@ export function ProductFormModal({
         ...current,
         category: nextCategories,
       };
+    });
+  };
+
+  const openLightbox = (imageUrl, alt) => {
+    setLightboxImage({
+      imageUrl,
+      alt,
     });
   };
 
@@ -248,37 +350,40 @@ export function ProductFormModal({
       payload.append("category", formState.category.join(","));
     }
 
-    formState.images.forEach((file) => {
-      payload.append("images", file);
+    CREATE_IMAGE_FIELDS.forEach((quantity) => {
+      (formState.imagesByQuantity[quantity] || []).forEach((file) => {
+        payload.append(`images${quantity}`, file);
+      });
     });
 
     onSubmit(payload);
   };
 
   return (
-    <div className="modal-overlay" role="presentation" onClick={onClose}>
-      <div
-        className="modal-shell"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="add-product-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="modal-header">
-          <div>
-            <p className="eyebrow">{isEditMode ? "Edit product" : "Create product"}</p>
-            <h3 id="add-product-title">
-              {isEditMode ? "Update product" : "Add a new product"}
-            </h3>
+    <>
+      <div className="modal-overlay" role="presentation" onClick={onClose}>
+        <div
+          className="modal-shell"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-product-title"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="modal-header">
+            <div>
+              <p className="eyebrow">{isEditMode ? "Edit product" : "Create product"}</p>
+              <h3 id="add-product-title">
+                {isEditMode ? "Update product" : "Add a new product"}
+              </h3>
+            </div>
+            <button type="button" className="ghost-button" onClick={onClose}>
+              <FiX className="button-icon" />
+              Close
+            </button>
           </div>
-          <button type="button" className="ghost-button" onClick={onClose}>
-            <FiX className="button-icon" />
-            Close
-          </button>
-        </div>
 
-        <form className="modal-form" onSubmit={handleSubmit}>
-          <section className="modal-section">
+          <form className="modal-form" onSubmit={handleSubmit}>
+            <section className="modal-section">
             <div className="modal-section-heading">
               <p className="eyebrow">Core details</p>
               <h4>Basic product information</h4>
@@ -398,37 +503,92 @@ export function ProductFormModal({
                 </select>
               </label>
 
-              <label className="field-shell modal-grid-span-2">
-                <span>{isEditMode ? "Replace images" : "Images"}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(event) =>
-                    updateField("images", Array.from(event.target.files || []).slice(0, 5))
-                  }
-                />
-              </label>
+              {CREATE_IMAGE_FIELDS.map((quantity) => (
+                <label key={quantity} className="field-shell">
+                  <span>
+                    {isEditMode
+                      ? `Replace ${quantity} capsule images`
+                      : `Images for ${quantity} capsules`}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(event) =>
+                      updateImagesByQuantity(
+                        quantity,
+                        Array.from(event.target.files || []).slice(0, 5)
+                      )
+                    }
+                  />
+                </label>
+              ))}
             </div>
 
-            {isEditMode && Array.isArray(product?.images) && product.images.length ? (
-              <div className="field-shell field-shell-full">
-                <span>Current images</span>
-                <div className="modal-image-row">
-                  {product.images.map((image) => (
-                    <img
-                      key={image.imagePublicId || image.imageUrl}
-                      className="modal-image-thumb"
-                      src={image.imageUrl}
-                      alt={product.title}
+              {CREATE_IMAGE_FIELDS.map((quantity) =>
+                formState.imagesByQuantity[quantity]?.length ? (
+                  <div key={`selected-${quantity}`} className="field-shell field-shell-full">
+                    <span>{`Selected files for ${quantity} capsules`}</span>
+                    <FileImagePreviewRow
+                      files={formState.imagesByQuantity[quantity]}
+                      altPrefix={`${quantity} capsule preview`}
+                      onOpenImage={openLightbox}
                     />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </section>
+                    <div className="chip-row">
+                      {formState.imagesByQuantity[quantity].map((image) => (
+                        <span
+                          key={`${quantity}-${image.name}-${image.lastModified}`}
+                          className="soft-chip"
+                        >
+                          {image.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null
+              )}
 
-          <section className="modal-section">
+              {isEditMode
+                ? CREATE_IMAGE_FIELDS.map((quantity) => {
+                    const currentImages = Array.isArray(product?.quantityImages?.[quantity])
+                      ? product.quantityImages[quantity]
+                      : [];
+
+                    return (
+                      <div key={`current-${quantity}`} className="field-shell field-shell-full">
+                        <span>{`Current ${quantity} capsule images`}</span>
+                        {currentImages.length ? (
+                          <div className="modal-image-row">
+                            {currentImages.map((image, index) => (
+                              <button
+                                key={`${quantity}-${image.imagePublicId || image.imageUrl}`}
+                                type="button"
+                                className="image-thumb-button"
+                                onClick={() =>
+                                  openLightbox(
+                                    image.imageUrl,
+                                    `${product.title || "Product"} ${quantity} capsules image ${index + 1}`
+                                  )
+                                }
+                              >
+                                <img
+                                  className="modal-image-thumb"
+                                  src={image.imageUrl}
+                                  alt={product.title}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p>No images uploaded for this pack size yet.</p>
+                        )}
+                      </div>
+                    );
+                  })
+                : null}
+            </section>
+
+            <section className="modal-section">
             <div className="modal-section-heading">
               <p className="eyebrow">Content</p>
               <h4>Description and guidance</h4>
@@ -483,9 +643,9 @@ export function ProductFormModal({
                 onChange={(value) => updateField("disclaimer", value)}
               />
             </div>
-          </section>
+            </section>
 
-          <section className="modal-section">
+            <section className="modal-section">
             <div className="modal-section-heading">
               <p className="eyebrow">Discovery</p>
               <h4>Categories, metadata, and support</h4>
@@ -538,9 +698,9 @@ export function ProductFormModal({
                 ))}
               </div>
             </div>
-          </section>
+            </section>
 
-          <section className="modal-section">
+            <section className="modal-section">
             <div className="modal-section-heading">
               <p className="eyebrow">Manufacturing</p>
               <h4>Origin and marketed details</h4>
@@ -585,9 +745,9 @@ export function ProductFormModal({
                 />
               </label>
             </div>
-          </section>
+            </section>
 
-          <section className="modal-section">
+            <section className="modal-section">
             <div className="modal-section-heading">
               <p className="eyebrow">Extra info</p>
               <h4>Usage details and best results</h4>
@@ -637,20 +797,26 @@ export function ProductFormModal({
                 </select>
               </label>
             </div>
-          </section>
+            </section>
 
-          <div className="modal-actions">
-            <button type="button" className="ghost-button" onClick={onClose}>
-              <FiX className="button-icon" />
-              Cancel
-            </button>
-            <button type="submit" className="primary-button" disabled={isSubmitting}>
-              <FiSave className="button-icon" />
-              {isSubmitting ? "Saving..." : isEditMode ? "Update product" : "Create product"}
-            </button>
-          </div>
-        </form>
+            <div className="modal-actions">
+              <button type="button" className="ghost-button" onClick={onClose}>
+                <FiX className="button-icon" />
+                Cancel
+              </button>
+              <button type="submit" className="primary-button" disabled={isSubmitting}>
+                <FiSave className="button-icon" />
+                {isSubmitting ? "Saving..." : isEditMode ? "Update product" : "Create product"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+      <ImageLightbox
+        imageUrl={lightboxImage?.imageUrl}
+        alt={lightboxImage?.alt || "Product preview"}
+        onClose={() => setLightboxImage(null)}
+      />
+    </>
   );
 }

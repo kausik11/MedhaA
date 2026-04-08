@@ -1482,6 +1482,49 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
+.image-thumb-button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.image-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 16, 20, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.image-lightbox-shell {
+  width: min(900px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  display: grid;
+  gap: 16px;
+  justify-items: end;
+  padding: 20px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(31, 44, 32, 0.12);
+  box-shadow: 0 24px 70px rgba(18, 28, 18, 0.24);
+}
+
+.image-lightbox-close {
+  min-width: 120px;
+}
+
+.image-lightbox-image {
+  max-width: 100%;
+  max-height: calc(100vh - 140px);
+  border-radius: 22px;
+  object-fit: contain;
+  background: rgba(244, 247, 250, 0.9);
+}
+
 .rich-text-field {
   align-items: stretch;
 }
