@@ -1,5 +1,5 @@
 const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api"
 ).replace(/\/$/, "");
 const AUTH_STORAGE_KEY = "medha_admin_auth";
 
@@ -236,6 +236,42 @@ export const api = {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
+    });
+  },
+  getPackages() {
+    return request("/packages");
+  },
+  createPackage(payload) {
+    const isFormData = payload instanceof FormData;
+    return request("/packages", {
+      method: "POST",
+      ...(isFormData
+        ? { body: payload }
+        : {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }),
+    });
+  },
+  updatePackage(packageId, payload) {
+    const isFormData = payload instanceof FormData;
+    return request(`/packages/${packageId}`, {
+      method: "PUT",
+      ...(isFormData
+        ? { body: payload }
+        : {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }),
+    });
+  },
+  deletePackage(packageId) {
+    return request(`/packages/${packageId}`, {
+      method: "DELETE",
     });
   },
   getProductCategories() {

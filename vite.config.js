@@ -7,9 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://medha-b.vercel.app',
+        target: 'http://localhost:5001',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
     },
   },
