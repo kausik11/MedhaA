@@ -35,6 +35,17 @@ export const ADMIN_ROUTES = [
     statKey: "categories",
   },
   {
+    id: "packages",
+    path: "/packages",
+    label: "Packages",
+    eyebrow: "Bundles",
+    description: "Create product packages priced by quantity or month pack.",
+    headerTitle: "Packages workspace",
+    headerSubtitle:
+      "Select a product, choose the pack size, and let package pricing follow quantity or month pack rules.",
+    statKey: "packages",
+  },
+  {
     id: "offers",
     path: "/offers",
     label: "Offers",

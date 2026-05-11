@@ -11,6 +11,7 @@ import { AddressesPanel } from "./components/AddressesPanel";
 import { OffersPanel } from "./components/OffersPanel";
 import { OrdersPanel } from "./components/OrdersPanel";
 import { OrderStatusPanel } from "./components/OrderStatusPanel";
+import { PackagesPanel } from "./components/PackagesPanel";
 import { ProductsPanel } from "./components/ProductsPanel";
 import { TestimonialsPanel } from "./components/TestimonialsPanel";
 import { UsersPanel } from "./components/UsersPanel";
@@ -32,6 +33,7 @@ function App() {
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [packages, setPackages] = useState([]);
   const [offers, setOffers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [cart, setCart] = useState(null);
@@ -40,6 +42,7 @@ function App() {
   const [productsLoading, setProductsLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [packagesLoading, setPackagesLoading] = useState(true);
   const [offersLoading, setOffersLoading] = useState(true);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState(true);
@@ -110,6 +113,7 @@ function App() {
         setProductsLoading(true);
         setUsersLoading(true);
         setCategoriesLoading(true);
+        setPackagesLoading(true);
         setOffersLoading(true);
         setTestimonialsLoading(true);
         setCartLoading(true);
@@ -124,6 +128,7 @@ function App() {
           productsData,
           usersData,
           categoriesData,
+          packagesData,
           offersData,
           testimonialsData,
           cartData,
@@ -133,6 +138,7 @@ function App() {
           api.getProducts(),
           api.getUsers(),
           api.getProductCategories(),
+          api.getPackages(),
           api.getOffers(),
           api.getTestimonials(),
           api.getAllCarts(),
@@ -147,6 +153,7 @@ function App() {
         setProducts(Array.isArray(productsData) ? productsData : []);
         setUsers(Array.isArray(usersData) ? usersData : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setPackages(Array.isArray(packagesData) ? packagesData : []);
         setOffers(Array.isArray(offersData) ? offersData : []);
         setTestimonials(Array.isArray(testimonialsData) ? testimonialsData : []);
         setCart(Array.isArray(cartData) ? cartData : cartData && typeof cartData === "object" ? cartData : null);
@@ -160,6 +167,7 @@ function App() {
             setProducts([]);
             setUsers([]);
             setCategories([]);
+            setPackages([]);
             setOffers([]);
             setTestimonials([]);
             setCart(null);
@@ -175,6 +183,7 @@ function App() {
           setProductsLoading(false);
           setUsersLoading(false);
           setCategoriesLoading(false);
+          setPackagesLoading(false);
           setOffersLoading(false);
           setTestimonialsLoading(false);
           setCartLoading(false);
@@ -230,6 +239,7 @@ function App() {
     setProducts([]);
     setUsers([]);
     setCategories([]);
+    setPackages([]);
     setOffers([]);
     setTestimonials([]);
     setCart(null);
@@ -491,6 +501,59 @@ function App() {
       showNotice("success", "Category deleted successfully.");
     } catch (error) {
       showNotice("error", error.message || "Unable to delete category.");
+      throw error;
+    }
+  };
+
+  const handleCreatePackage = async (payload) => {
+    try {
+      const createdPackage = await api.createPackage(payload);
+      setPackages((current) => [createdPackage, ...current]);
+      showNotice("success", "Package created successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to create package.");
+      throw error;
+    }
+  };
+
+  const handleUpdatePackage = async (packageId, payload) => {
+    try {
+      const updatedPackage = await api.updatePackage(packageId, payload);
+      setPackages((current) =>
+        current.map((packageItem) =>
+          packageItem._id === packageId ? updatedPackage : packageItem
+        )
+      );
+      showNotice("success", "Package updated successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to update package.");
+      throw error;
+    }
+  };
+
+  const handleDeletePackage = async (packageId) => {
+    const confirmed = await confirmAction({
+      title: "Deactivate package?",
+      message: "This will hide the package from public package endpoints.",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await api.deletePackage(packageId);
+      const updatedPackage = response?.package;
+      setPackages((current) =>
+        current.map((packageItem) =>
+          packageItem._id === packageId
+            ? updatedPackage || { ...packageItem, isActive: false }
+            : packageItem
+        )
+      );
+      showNotice("success", "Package deactivated successfully.");
+    } catch (error) {
+      showNotice("error", error.message || "Unable to deactivate package.");
       throw error;
     }
   };
@@ -812,6 +875,7 @@ function App() {
     products: products.length,
     users: users.length,
     categories: categories.length,
+    packages: packages.length,
     offers: offers.length,
     testimonials: testimonials.length,
     cart: Array.isArray(cart)
@@ -941,6 +1005,19 @@ function App() {
                 onCreateCategory={handleCreateCategory}
                 onDeleteCategory={handleDeleteCategory}
                 onUpdateCategory={handleUpdateCategory}
+              />
+            }
+          />
+          <Route
+            path="packages"
+            element={
+              <PackagesPanel
+                loading={packagesLoading}
+                onCreatePackage={handleCreatePackage}
+                onDeletePackage={handleDeletePackage}
+                onUpdatePackage={handleUpdatePackage}
+                packages={packages}
+                products={products}
               />
             }
           />

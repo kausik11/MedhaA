@@ -646,6 +646,70 @@
   box-shadow: 0 20px 40px rgba(67, 83, 58, 0.06);
 }
 
+.package-create-bar {
+  width: 100%;
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(220px, 1fr) 130px 190px auto;
+  align-items: end;
+  border-radius: 24px;
+  border: 1px solid rgba(31, 44, 32, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 20px 40px rgba(67, 83, 58, 0.06);
+}
+
+.package-items-editor {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 44, 32, 0.08);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.package-items-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.package-items-heading span {
+  color: #43533f;
+  font-size: 0.9rem;
+}
+
+.package-add-item-button,
+.package-remove-item-button {
+  min-height: 44px;
+}
+
+.package-item-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px 120px auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.package-active-toggle {
+  min-height: 50px;
+  justify-content: center;
+}
+
+.package-description-field {
+  grid-column: 1 / -2;
+}
+
+.package-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .address-form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -672,6 +736,12 @@
 .field-shell span {
   font-size: 0.9rem;
   color: #43533f;
+}
+
+.field-error-text {
+  color: #973b1e;
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .field-shell input,
@@ -1056,6 +1126,39 @@
 
 .offer-card {
   align-items: center;
+}
+
+.package-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px auto;
+  align-items: center;
+}
+
+.package-card-main {
+  gap: 10px;
+}
+
+.package-description {
+  margin: 0;
+  color: #4f5d4b;
+  line-height: 1.6;
+}
+
+.package-price-block {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  color: #516453;
+}
+
+.package-price-block span,
+.package-price-block small {
+  color: #667085;
+}
+
+.package-price-block strong {
+  color: #101828;
+  font-size: 1.35rem;
 }
 
 .offer-card-main {
@@ -1863,6 +1966,7 @@
   .category-create-bar,
   .header-route-nav,
   .offer-create-bar,
+  .package-create-bar,
   .category-card,
   .modal-header,
   .modal-actions {
@@ -1877,8 +1981,9 @@
 
   .filter-bar,
   .category-create-bar,
-  .offer-create-bar,
-  .cart-create-bar,
+    .offer-create-bar,
+    .package-create-bar,
+    .cart-create-bar,
   .auth-mode-switch,
   .user-verification-actions,
   .address-form-grid,
@@ -1890,6 +1995,22 @@
   .modal-grid,
   .modal-rich-grid {
     grid-template-columns: 1fr;
+  }
+
+  .package-card {
+    grid-template-columns: 1fr;
+  }
+
+  .package-item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .package-description-field {
+    grid-column: span 1;
+  }
+
+  .package-price-block {
+    justify-items: start;
   }
 
   .order-card-top,
