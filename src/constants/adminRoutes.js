@@ -90,6 +90,17 @@ export const ADMIN_ROUTES = [
     statKey: "cart",
   },
   {
+    id: "favorites",
+    path: "/favorites",
+    label: "Favourites",
+    eyebrow: "Customer intent",
+    description: "Review products users have saved as favourites.",
+    headerTitle: "Favourites workspace",
+    headerSubtitle:
+      "Inspect favourite products by user and identify items customers want to revisit.",
+    statKey: "favorites",
+  },
+  {
     id: "orders",
     path: "/orders",
     label: "Orders",

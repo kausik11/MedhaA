@@ -355,6 +355,9 @@ export const api = {
   getAllCarts() {
     return request("/cart/all");
   },
+  getAllFavorites() {
+    return request("/favorites/all");
+  },
   addCartItem(payload) {
     return request("/cart/items", {
       method: "POST",

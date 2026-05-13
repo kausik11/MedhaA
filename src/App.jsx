@@ -7,6 +7,7 @@ import { ConfirmToast } from "./components/ConfirmToast";
 import { AdminShell } from "./components/AdminShell";
 import { CategoriesPanel } from "./components/CategoriesPanel";
 import { CartPanel } from "./components/CartPanel";
+import { FavoritesPanel } from "./components/FavoritesPanel";
 import { AddressesPanel } from "./components/AddressesPanel";
 import { OffersPanel } from "./components/OffersPanel";
 import { OrdersPanel } from "./components/OrdersPanel";
@@ -37,6 +38,7 @@ function App() {
   const [offers, setOffers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [cart, setCart] = useState(null);
+  const [favorites, setFavorites] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -46,6 +48,7 @@ function App() {
   const [offersLoading, setOffersLoading] = useState(true);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState(true);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
   const [addressesLoading, setAddressesLoading] = useState(true);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -117,6 +120,7 @@ function App() {
         setOffersLoading(true);
         setTestimonialsLoading(true);
         setCartLoading(true);
+        setFavoritesLoading(true);
         setAddressesLoading(true);
         setOrdersLoading(true);
       } else {  
@@ -132,6 +136,7 @@ function App() {
           offersData,
           testimonialsData,
           cartData,
+          favoritesData,
           addressesData,
           ordersData,
         ] = await Promise.all([
@@ -142,6 +147,7 @@ function App() {
           api.getOffers(),
           api.getTestimonials(),
           api.getAllCarts(),
+          api.getAllFavorites(),
           api.getAddresses(),
           api.getOrders({ includeArchived: true }),
         ]);
@@ -157,6 +163,13 @@ function App() {
         setOffers(Array.isArray(offersData) ? offersData : []);
         setTestimonials(Array.isArray(testimonialsData) ? testimonialsData : []);
         setCart(Array.isArray(cartData) ? cartData : cartData && typeof cartData === "object" ? cartData : null);
+        setFavorites(
+          Array.isArray(favoritesData)
+            ? favoritesData
+            : favoritesData && typeof favoritesData === "object"
+              ? favoritesData
+              : null
+        );
         setAddresses(Array.isArray(addressesData) ? addressesData : []);
         setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (error) {
@@ -171,6 +184,7 @@ function App() {
             setOffers([]);
             setTestimonials([]);
             setCart(null);
+            setFavorites(null);
             setAddresses([]);
             setOrders([]);
             showNotice("error", "Your admin session has expired. Please sign in again.");
@@ -187,6 +201,7 @@ function App() {
           setOffersLoading(false);
           setTestimonialsLoading(false);
           setCartLoading(false);
+          setFavoritesLoading(false);
           setAddressesLoading(false);
           setOrdersLoading(false);
           setIsRefreshing(false);
@@ -243,6 +258,7 @@ function App() {
     setOffers([]);
     setTestimonials([]);
     setCart(null);
+    setFavorites(null);
     setAddresses([]);
     setOrders([]);
     setIsProductModalOpen(false);
@@ -881,6 +897,9 @@ function App() {
     cart: Array.isArray(cart)
       ? cart.reduce((total, cartEntry) => total + (cartEntry?.itemCount || 0), 0)
       : cart?.itemCount || 0,
+    favorites: Array.isArray(favorites)
+      ? favorites.reduce((total, favoriteEntry) => total + (favoriteEntry?.itemCount || 0), 0)
+      : favorites?.itemCount || 0,
     addresses: addresses.length,
     orders: orders.length,
   };
@@ -1083,6 +1102,16 @@ function App() {
                 onDeleteOrder={handleDeleteOrder}
                 onUpdateOrder={handleUpdateOrder}
                 onUpdateOrderStatus={handleUpdateOrderStatus}
+              />
+            }
+          />
+          <Route
+            path="favorites"
+            element={
+              <FavoritesPanel
+                currentUser={currentUser}
+                favorites={favorites}
+                loading={favoritesLoading}
               />
             }
           />
