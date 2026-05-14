@@ -92,6 +92,8 @@ const createInitialState = () => ({
   description: "",
   actualPrice: "",
   discountPercentage: "",
+  star: "4.8",
+  reviewsCount: "245",
   composition: "",
   keyHealthBenefits: "",
   usageDirection: "",
@@ -144,6 +146,14 @@ const createFormState = (product) => {
       product.discountPercentage != null && !Number.isNaN(product.discountPercentage)
         ? `${product.discountPercentage}`
         : "",
+    star:
+      product.star != null && !Number.isNaN(product.star)
+        ? `${product.star}`
+        : "4.8",
+    reviewsCount:
+      product.reviewsCount != null && !Number.isNaN(product.reviewsCount)
+        ? `${product.reviewsCount}`
+        : "245",
     composition: product.composition || "",
     keyHealthBenefits: product.keyHealthBenefits || "",
     usageDirection: product.usageDirection || "",
@@ -262,6 +272,8 @@ export function ProductFormModal({
     payload.append("quantity", formState.quantity);
     payload.append("description", normalizeRichText(formState.description));
     payload.append("actualPrice", formState.actualPrice);
+    payload.append("star", formState.star);
+    payload.append("reviewsCount", formState.reviewsCount);
     payload.append("nonVegetarianSupplement", `${formState.nonVegetarianSupplement}`);
     payload.append("mostBought", `${formState.mostBought}`);
     payload.append("publicationStatus", formState.publicationStatus);
@@ -478,6 +490,29 @@ export function ProductFormModal({
                   step="0.01"
                   value={formState.discountPercentage}
                   onChange={(event) => updateField("discountPercentage", event.target.value)}
+                />
+              </label>
+
+              <label className="field-shell">
+                <span>Star rating</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={formState.star}
+                  onChange={(event) => updateField("star", event.target.value)}
+                />
+              </label>
+
+              <label className="field-shell">
+                <span>Reviews count</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formState.reviewsCount}
+                  onChange={(event) => updateField("reviewsCount", event.target.value)}
                 />
               </label>
 

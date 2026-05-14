@@ -48,6 +48,8 @@ export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStat
   const descriptionPreview = getPlainText(product.description);
   const publicationStatus = product.publicationStatus || "published";
   const isDraft = publicationStatus === "draft";
+  const star = Number(product.star);
+  const reviewsCount = Number(product.reviewsCount);
 
   return (
     <article className="product-card">
@@ -89,6 +91,13 @@ export function ProductCard({ product, onDelete, onEdit, onTogglePublicationStat
           <div className="product-meta-pill">
             <span>Base pack</span>
             <strong>{baseQuantity} capsules</strong>
+          </div>
+          <div className="product-meta-pill">
+            <span>Rating</span>
+            <strong>
+              {Number.isFinite(star) ? star.toFixed(1) : "0.0"} / 5
+              {" "}({Number.isFinite(reviewsCount) ? reviewsCount : 0})
+            </strong>
           </div>
         </div>
 
