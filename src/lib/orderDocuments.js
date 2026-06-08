@@ -1,4 +1,5 @@
 import medhaLogoUrl from "../assets/MDB_logo.png";
+import invoiceWatermarkUrl from "../assets/Asset 25@10x.png";
 
 const SERVICE_DESK_ADDRESS =
   "49/5, SH 1, Dunlop, Nagendra Nagar, Beehive Garden, Belghoria, Kolkata, WB-700056";
@@ -89,7 +90,7 @@ const getItemName = (item, index) => item.productId?.title || `Product ${index +
 const getPaymentLabel = (paymentMethod) =>
   paymentMethod === "RAZORPAY" ? "Pay Online" : "Cash On Delivery";
 
-const getInvoiceHtml = (order, logoSrc) => {
+const getInvoiceHtml = (order, logoSrc, watermarkSrc) => {
   const orderId = order.orderId || order._id || "ORDER";
   const items = Array.isArray(order.orderItems) ? order.orderItems : [];
   const customerName = getCustomerName(order);
@@ -110,7 +111,8 @@ const getInvoiceHtml = (order, logoSrc) => {
     body { margin: 0; background: #eef6ff; padding: 28px; }
     .invoice { position: relative; max-width: 980px; min-height: 1280px; margin: 0 auto; overflow: hidden; border-radius: 0 0 20px 20px; background: #fff; box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12); }
     .content { position: relative; z-index: 1; padding: 58px 74px 150px; }
-    .watermark { position: absolute; left: 50%; top: 50%; width: min(680px, 72%); opacity: .045; transform: translate(-50%, -38%); text-align: center; color: #2f73e8; font-size: 72px; font-weight: 500; line-height: .98; letter-spacing: 0; }
+    .watermark { position: absolute; left: 50%; top: 50%; width: min(520px, 62%); opacity: .055; transform: translate(-50%, -34%); }
+    .watermark img { display: block; width: 100%; height: auto; object-fit: contain; }
     .top { display: grid; grid-template-columns: minmax(0, .95fr) minmax(300px, .78fr); gap: 64px; align-items: start; }
     .brand-logo { display: block; width: 236px; max-width: 100%; height: auto; object-fit: contain; }
     .company-address { margin-top: 42px; max-width: 430px; font-size: 18px; font-weight: 400; line-height: 1.5; color: #111827; }
@@ -125,7 +127,7 @@ const getInvoiceHtml = (order, logoSrc) => {
     .address-title { border-radius: 0 6px 6px 0; background: #2f73e8; padding: 13px 28px; color: #fff; font-size: 18px; font-weight: 500; }
     .address-card:last-child .address-title { border-radius: 6px 0 0 6px; text-align: right; }
     .address-body { padding: 34px 0 0; font-size: 17px; font-weight: 400; line-height: 1.5; }
-    .address-body strong { display: block; margin-bottom: 18px; font-size: 18px; font-weight: 500; }
+    .address-body strong { display: block; margin-bottom: 18px; font-size: 22px; font-weight: 500; }
     .address-card:last-child .address-body { text-align: right; }
     .table-wrap { margin-top: 58px; }
     table { width: 100%; border-collapse: collapse; font-size: 17px; }
@@ -155,7 +157,9 @@ const getInvoiceHtml = (order, logoSrc) => {
 </head>
 <body>
   <main class="invoice">
-    <div class="watermark" aria-hidden="true">Medha<br />Botanics</div>
+    <div class="watermark" aria-hidden="true">
+      <img src="${escapeHtml(watermarkSrc)}" alt="" />
+    </div>
     <div class="content">
       <section class="top">
         <div>
@@ -318,8 +322,13 @@ const getShippingLabelHtml = (order) => {
 
 export const downloadOrderInvoice = async (order) => {
   const orderId = safeFileName(order.orderId || order._id || "order");
-  const logoSrc = await getImageDataUri(medhaLogoUrl);
-  const blob = new Blob([getInvoiceHtml(order, logoSrc)], { type: "text/html;charset=utf-8" });
+  const [logoSrc, watermarkSrc] = await Promise.all([
+    getImageDataUri(medhaLogoUrl),
+    getImageDataUri(invoiceWatermarkUrl),
+  ]);
+  const blob = new Blob([getInvoiceHtml(order, logoSrc, watermarkSrc)], {
+    type: "text/html;charset=utf-8",
+  });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
 
