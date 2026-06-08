@@ -110,43 +110,43 @@ const getInvoiceHtml = (order, logoSrc) => {
     body { margin: 0; background: #eef6ff; padding: 28px; }
     .invoice { position: relative; max-width: 980px; min-height: 1280px; margin: 0 auto; overflow: hidden; border-radius: 0 0 20px 20px; background: #fff; box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12); }
     .content { position: relative; z-index: 1; padding: 58px 74px 150px; }
-    .watermark { position: absolute; left: 50%; top: 50%; width: min(680px, 72%); opacity: .045; transform: translate(-50%, -38%); text-align: center; color: #2f73e8; font-size: 78px; font-weight: 900; line-height: .98; letter-spacing: 0; }
+    .watermark { position: absolute; left: 50%; top: 50%; width: min(680px, 72%); opacity: .045; transform: translate(-50%, -38%); text-align: center; color: #2f73e8; font-size: 72px; font-weight: 500; line-height: .98; letter-spacing: 0; }
     .top { display: grid; grid-template-columns: minmax(0, .95fr) minmax(300px, .78fr); gap: 64px; align-items: start; }
     .brand-logo { display: block; width: 236px; max-width: 100%; height: auto; object-fit: contain; }
-    .company-address { margin-top: 42px; max-width: 430px; font-size: 22px; font-weight: 700; line-height: 1.45; color: #111827; }
-    .gstin { margin-top: 16px; color: #111827; font-size: 18px; font-weight: 800; letter-spacing: .02em; }
+    .company-address { margin-top: 42px; max-width: 430px; font-size: 18px; font-weight: 400; line-height: 1.5; color: #111827; }
+    .gstin { margin-top: 16px; color: #111827; font-size: 16px; font-weight: 500; letter-spacing: .01em; }
     .invoice-card { margin-left: auto; overflow: hidden; border-radius: 12px; background: linear-gradient(135deg, #2f78f4 0%, #073b9e 100%); padding: 28px 42px; color: #fff; text-align: center; }
-    .invoice-card h1 { margin: 0; font-size: 40px; font-weight: 700; line-height: 1.1; }
-    .invoice-card p { margin: 12px 0 0; font-size: 21px; line-height: 1.3; }
-    .meta { margin-top: 38px; display: grid; grid-template-columns: 1fr 12px 1fr; gap: 26px; align-items: start; font-size: 22px; line-height: 1.45; }
-    .meta strong { display: block; font-weight: 700; }
+    .invoice-card h1 { margin: 0; font-size: 32px; font-weight: 500; line-height: 1.1; }
+    .invoice-card p { margin: 12px 0 0; font-size: 17px; font-weight: 400; line-height: 1.3; }
+    .meta { margin-top: 38px; display: grid; grid-template-columns: 1fr 12px 1fr; gap: 26px; align-items: start; font-size: 17px; font-weight: 400; line-height: 1.45; }
+    .meta strong { display: block; font-weight: 500; }
     .meta-line { width: 4px; height: 54px; border-radius: 99px; background: #2f78f4; }
     .address-grid { margin-top: 78px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 86px; }
-    .address-title { border-radius: 0 6px 6px 0; background: #2f73e8; padding: 13px 28px; color: #fff; font-size: 22px; font-weight: 700; }
+    .address-title { border-radius: 0 6px 6px 0; background: #2f73e8; padding: 13px 28px; color: #fff; font-size: 18px; font-weight: 500; }
     .address-card:last-child .address-title { border-radius: 6px 0 0 6px; text-align: right; }
-    .address-body { padding: 34px 0 0; font-size: 21px; font-weight: 500; line-height: 1.45; }
-    .address-body strong { display: block; margin-bottom: 18px; font-size: 22px; font-weight: 800; }
+    .address-body { padding: 34px 0 0; font-size: 17px; font-weight: 400; line-height: 1.5; }
+    .address-body strong { display: block; margin-bottom: 18px; font-size: 18px; font-weight: 500; }
     .address-card:last-child .address-body { text-align: right; }
     .table-wrap { margin-top: 58px; }
-    table { width: 100%; border-collapse: collapse; font-size: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 17px; }
     thead { border-bottom: 2px solid #2f73e8; border-top: 2px solid #2f73e8; color: #2f73e8; }
-    th { padding: 20px 18px; text-align: left; font-size: 20px; font-weight: 800; }
+    th { padding: 20px 18px; text-align: left; font-size: 17px; font-weight: 500; }
     th:nth-child(2), th:nth-child(3), td:nth-child(2), td:nth-child(3) { text-align: center; }
     th:last-child, td:last-child { text-align: right; }
-    td { padding: 20px 18px; font-size: 20px; font-weight: 600; vertical-align: top; }
+    td { padding: 20px 18px; font-size: 17px; font-weight: 400; vertical-align: top; }
     .divider { margin-top: 22px; height: 3px; border-radius: 99px; background: #2f73e8; }
     .bottom { margin-top: 34px; display: grid; grid-template-columns: minmax(240px, .8fr) minmax(360px, 1fr); gap: 60px; align-items: start; }
-    .payment-method { margin-top: 78px; font-size: 20px; line-height: 1.5; }
-    .payment-method em { display: block; margin-bottom: 24px; font-size: 20px; font-weight: 700; }
-    .payment-method strong { font-size: 22px; }
-    .thanks { margin-top: 88px; color: #2f73e8; font-size: 22px; font-weight: 800; }
-    .totals { font-size: 20px; font-weight: 700; }
+    .payment-method { margin-top: 78px; font-size: 17px; font-weight: 400; line-height: 1.5; }
+    .payment-method em { display: block; margin-bottom: 24px; font-size: 17px; font-weight: 400; }
+    .payment-method strong { font-size: 18px; font-weight: 500; }
+    .thanks { margin-top: 88px; color: #2f73e8; font-size: 18px; font-weight: 500; }
+    .totals { font-size: 17px; font-weight: 400; }
     .total-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; padding: 10px 0; }
     .total-row span:last-child { text-align: right; }
     .total-rule { margin: 16px 0 12px; height: 3px; border-radius: 99px; background: #2f73e8; }
-    .grand { font-size: 28px; font-weight: 900; }
-    .payment-under-total { margin-top: 12px; text-align: right; color: #111827; font-size: 18px; font-weight: 700; }
-    .footer { position: absolute; inset-inline: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 70px; background: #2f73e8; padding: 34px 40px; color: #fff; font-size: 22px; font-weight: 700; }
+    .grand { font-size: 22px; font-weight: 500; }
+    .payment-under-total { margin-top: 12px; text-align: right; color: #111827; font-size: 16px; font-weight: 400; }
+    .footer { position: absolute; inset-inline: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 70px; background: #2f73e8; padding: 34px 40px; color: #fff; font-size: 18px; font-weight: 400; }
     .footer-item { display: inline-flex; align-items: center; gap: 14px; line-height: 1; }
     .footer-icon { display: inline-grid; width: 42px; height: 42px; place-items: center; flex: 0 0 42px; border: 1px solid rgba(255,255,255,.9); border-radius: 999px; font-size: 20px; line-height: 1; }
     @media print { body { background: #fff; padding: 0; } .invoice { box-shadow: none; max-width: none; min-height: 100vh; } }
