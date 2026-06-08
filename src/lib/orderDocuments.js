@@ -1,6 +1,8 @@
-const LOGO_SRC = "/favicon.svg";
+import medhaLogoUrl from "../assets/MDB_logo.png";
+
 const SERVICE_DESK_ADDRESS =
-  "49/5, SH 1, Dunlop, Narendra Nagar, Beehive Garden, Belghoria, Kolkata, West Bengal 700056";
+  "49/5, SH 1, Dunlop, Nagendra Nagar, Beehive Garden, Belghoria, Kolkata, WB-700056";
+const GSTIN = "19AAKCD8456G1Z6";
 
 const escapeHtml = (value) =>
   `${value ?? ""}`
@@ -10,37 +12,56 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
-const formatCurrency = (value) => {
+const formatAmount = (value) => {
   const numberValue = Number(value);
   const safeValue = Number.isFinite(numberValue) ? numberValue : 0;
 
-  return `Rs. ${safeValue.toLocaleString("en-IN", {
+  return safeValue.toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
-};
-
-const formatDate = (value) => {
-  if (!value) return new Date().toLocaleDateString("en-IN");
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return new Date().toLocaleDateString("en-IN");
-
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
   });
 };
 
+const formatCurrency = (value) => `Rs. ${formatAmount(value)}`;
+
+const formatInvoiceDate = (value) => {
+  const date = value ? new Date(value) : new Date();
+  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;
+  const day = `${safeDate.getDate()}`.padStart(2, "0");
+  const month = `${safeDate.getMonth() + 1}`.padStart(2, "0");
+  const year = `${safeDate.getFullYear()}`.slice(-2);
+
+  return `${day}.${month}.${year}`;
+};
+
 const formatStatus = (value) =>
-  `${value || "confirmed"}`
+  `${value || "pending"}`
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 
 const safeFileName = (value) =>
   `${value || "order"}`.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "");
+
+const blobToDataUri = (blob) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => resolve(`${reader.result}`);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
+const getImageDataUri = async (src) => {
+  try {
+    const response = await fetch(src);
+    const blob = await response.blob();
+
+    return blobToDataUri(blob);
+  } catch {
+    return src;
+  }
+};
 
 const getCustomerName = (order) => {
   const userName = [order.user?.firstName, order.user?.lastName].filter(Boolean).join(" ").trim();
@@ -65,12 +86,17 @@ const getAddressLine = (address) => {
 
 const getItemName = (item, index) => item.productId?.title || `Product ${index + 1}`;
 
-const getInvoiceHtml = (order) => {
+const getPaymentLabel = (paymentMethod) =>
+  paymentMethod === "RAZORPAY" ? "Pay Online" : "Cash On Delivery";
+
+const getInvoiceHtml = (order, logoSrc) => {
   const orderId = order.orderId || order._id || "ORDER";
   const items = Array.isArray(order.orderItems) ? order.orderItems : [];
   const customerName = getCustomerName(order);
   const shippingAddress = order.shippingDetails;
   const billingAddress = order.isSameAsShipping ? order.shippingDetails : order.billingAddress;
+  const paymentMethod = order.paymentMethod || "COD";
+  const paymentStatus = order.paymentStatus || "pending";
 
   return `<!doctype html>
 <html lang="en">
@@ -79,96 +105,149 @@ const getInvoiceHtml = (order) => {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Invoice ${escapeHtml(orderId)}</title>
   <style>
-    :root { color: #0f172a; font-family: Inter, Arial, sans-serif; }
-    body { margin: 0; background: #f4faff; padding: 32px; }
-    .invoice { max-width: 920px; margin: 0 auto; overflow: hidden; border: 1px solid #cfe7ff; border-radius: 20px; background: #fff; box-shadow: 0 24px 70px rgba(25, 84, 145, 0.12); }
-    .hero { display: flex; justify-content: space-between; gap: 24px; padding: 30px; color: #fff; background: linear-gradient(135deg, #10213c 0%, #246cf0 100%); }
-    .brand { margin: 0; font-size: 30px; font-weight: 800; }
-    .company-block { max-width: 330px; text-align: right; }
-    .company-logo { height: 56px; max-width: 190px; object-fit: contain; object-position: right center; border-radius: 10px; background: rgba(255,255,255,.92); padding: 7px 10px; }
-    .company-name { margin-top: 10px; font-size: 18px; font-weight: 900; }
-    .service-address { margin-top: 6px; font-size: 12px; line-height: 1.5; color: rgba(255,255,255,.82); }
-    .muted { color: #64748b; }
-    .hero .muted { color: rgba(255,255,255,.78); }
-    .pill { display: inline-flex; border-radius: 999px; background: rgba(255,255,255,.14); padding: 8px 12px; font-size: 13px; font-weight: 800; }
-    .section { padding: 24px 30px; border-top: 1px solid #dbeafe; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-    h2 { margin: 0 0 10px; font-size: 16px; }
-    p { margin: 4px 0; line-height: 1.55; }
-    table { width: 100%; border-collapse: collapse; }
-    th { color: #246cf0; font-size: 12px; text-align: left; text-transform: uppercase; }
-    th, td { padding: 12px 10px; border-bottom: 1px solid #e5f2ff; vertical-align: top; }
-    td:last-child, th:last-child { text-align: right; }
-    .total-box { margin-left: auto; width: min(360px, 100%); }
-    .row { display: flex; justify-content: space-between; gap: 20px; padding: 8px 0; }
-    .grand { margin-top: 10px; border-top: 1px solid #cfe7ff; padding-top: 14px; font-size: 20px; font-weight: 800; }
-    @media print { body { background: #fff; padding: 0; } .invoice { border-radius: 0; box-shadow: none; } }
+    :root { color: #070d22; font-family: Inter, Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #eef6ff; padding: 28px; }
+    .invoice { position: relative; max-width: 980px; min-height: 1280px; margin: 0 auto; overflow: hidden; border-radius: 0 0 20px 20px; background: #fff; box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12); }
+    .content { position: relative; z-index: 1; padding: 58px 74px 150px; }
+    .watermark { position: absolute; left: 50%; top: 50%; width: min(680px, 72%); opacity: .045; transform: translate(-50%, -38%); text-align: center; color: #2f73e8; font-size: 78px; font-weight: 900; line-height: .98; letter-spacing: 0; }
+    .top { display: grid; grid-template-columns: minmax(0, .95fr) minmax(300px, .78fr); gap: 64px; align-items: start; }
+    .brand-logo { display: block; width: 236px; max-width: 100%; height: auto; object-fit: contain; }
+    .company-address { margin-top: 42px; max-width: 430px; font-size: 22px; font-weight: 700; line-height: 1.45; color: #111827; }
+    .gstin { margin-top: 16px; color: #111827; font-size: 18px; font-weight: 800; letter-spacing: .02em; }
+    .invoice-card { margin-left: auto; overflow: hidden; border-radius: 12px; background: linear-gradient(135deg, #2f78f4 0%, #073b9e 100%); padding: 28px 42px; color: #fff; text-align: center; }
+    .invoice-card h1 { margin: 0; font-size: 40px; font-weight: 700; line-height: 1.1; }
+    .invoice-card p { margin: 12px 0 0; font-size: 21px; line-height: 1.3; }
+    .meta { margin-top: 38px; display: grid; grid-template-columns: 1fr 12px 1fr; gap: 26px; align-items: start; font-size: 22px; line-height: 1.45; }
+    .meta strong { display: block; font-weight: 700; }
+    .meta-line { width: 4px; height: 54px; border-radius: 99px; background: #2f78f4; }
+    .address-grid { margin-top: 78px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 86px; }
+    .address-title { border-radius: 0 6px 6px 0; background: #2f73e8; padding: 13px 28px; color: #fff; font-size: 22px; font-weight: 700; }
+    .address-card:last-child .address-title { border-radius: 6px 0 0 6px; text-align: right; }
+    .address-body { padding: 34px 0 0; font-size: 21px; font-weight: 500; line-height: 1.45; }
+    .address-body strong { display: block; margin-bottom: 18px; font-size: 22px; font-weight: 800; }
+    .address-card:last-child .address-body { text-align: right; }
+    .table-wrap { margin-top: 58px; }
+    table { width: 100%; border-collapse: collapse; font-size: 20px; }
+    thead { border-bottom: 2px solid #2f73e8; border-top: 2px solid #2f73e8; color: #2f73e8; }
+    th { padding: 20px 18px; text-align: left; font-size: 20px; font-weight: 800; }
+    th:nth-child(2), th:nth-child(3), td:nth-child(2), td:nth-child(3) { text-align: center; }
+    th:last-child, td:last-child { text-align: right; }
+    td { padding: 20px 18px; font-size: 20px; font-weight: 600; vertical-align: top; }
+    .divider { margin-top: 22px; height: 3px; border-radius: 99px; background: #2f73e8; }
+    .bottom { margin-top: 34px; display: grid; grid-template-columns: minmax(240px, .8fr) minmax(360px, 1fr); gap: 60px; align-items: start; }
+    .payment-method { margin-top: 78px; font-size: 20px; line-height: 1.5; }
+    .payment-method em { display: block; margin-bottom: 24px; font-size: 20px; font-weight: 700; }
+    .payment-method strong { font-size: 22px; }
+    .thanks { margin-top: 88px; color: #2f73e8; font-size: 22px; font-weight: 800; }
+    .totals { font-size: 20px; font-weight: 700; }
+    .total-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; padding: 10px 0; }
+    .total-row span:last-child { text-align: right; }
+    .total-rule { margin: 16px 0 12px; height: 3px; border-radius: 99px; background: #2f73e8; }
+    .grand { font-size: 28px; font-weight: 900; }
+    .payment-under-total { margin-top: 12px; text-align: right; color: #111827; font-size: 18px; font-weight: 700; }
+    .footer { position: absolute; inset-inline: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 70px; background: #2f73e8; padding: 34px 40px; color: #fff; font-size: 22px; font-weight: 700; }
+    .footer-item { display: inline-flex; align-items: center; gap: 14px; line-height: 1; }
+    .footer-icon { display: inline-grid; width: 42px; height: 42px; place-items: center; flex: 0 0 42px; border: 1px solid rgba(255,255,255,.9); border-radius: 999px; font-size: 20px; line-height: 1; }
+    @media print { body { background: #fff; padding: 0; } .invoice { box-shadow: none; max-width: none; min-height: 100vh; } }
+    @media (max-width: 760px) { body { padding: 12px; } .content { padding: 34px 24px 170px; } .top, .address-grid, .bottom { grid-template-columns: 1fr; gap: 28px; } .invoice-card { margin-left: 0; } .address-card:last-child .address-title, .address-card:last-child .address-body { text-align: left; } .footer { flex-direction: column; gap: 14px; align-items: center; font-size: 16px; } table { font-size: 15px; } th, td { padding: 14px 8px; font-size: 15px; } }
   </style>
 </head>
 <body>
   <main class="invoice">
-    <section class="hero">
-      <div>
-        <p class="pill">Tax Invoice</p>
-        <h1 class="brand">Invoice</h1>
-        <p class="muted">Premium botanics and wellness essentials</p>
-        <p><strong>Invoice:</strong> ${escapeHtml(orderId)}</p>
-        <p><strong>Date:</strong> ${escapeHtml(formatDate(order.createdAt))}</p>
-        <p><strong>Status:</strong> ${escapeHtml(formatStatus(order.orderStatus))}</p>
-      </div>
-      <div class="company-block">
-        <img class="company-logo" src="${escapeHtml(LOGO_SRC)}" alt="Medha Botanics logo" />
-        <div class="company-name">Medha Botanics</div>
-        <p class="service-address"><strong>MedhaBotanics Service Desk</strong><br />${escapeHtml(SERVICE_DESK_ADDRESS)}</p>
-      </div>
-    </section>
+    <div class="watermark" aria-hidden="true">Medha<br />Botanics</div>
+    <div class="content">
+      <section class="top">
+        <div>
+          <img class="brand-logo" src="${escapeHtml(logoSrc)}" alt="Medha Botanics logo" />
+          <p class="company-address">${escapeHtml(SERVICE_DESK_ADDRESS)}</p>
+          <p class="gstin">GSTIN - ${escapeHtml(GSTIN)}</p>
+        </div>
+        <div>
+          <div class="invoice-card">
+            <h1>Tax Invoice</h1>
+            <p>${escapeHtml(orderId)}</p>
+          </div>
+          <div class="meta">
+            <div><strong>Invoice Date</strong>${escapeHtml(formatInvoiceDate(order.createdAt))}</div>
+            <div class="meta-line"></div>
+            <div><strong>Status</strong>${escapeHtml(formatStatus(order.orderStatus))}</div>
+          </div>
+        </div>
+      </section>
 
-    <section class="section grid">
-      <div>
-        <h2>Billed To</h2>
-        <p><strong>${escapeHtml(customerName)}</strong></p>
-        <p>${escapeHtml(getAddressLine(billingAddress))}</p>
-        <p>${escapeHtml(order.user?.email || "")}</p>
-      </div>
-      <div>
-        <h2>Ship To</h2>
-        <p><strong>${escapeHtml(shippingAddress?.fullName || customerName)}</strong></p>
-        <p>${escapeHtml(getAddressLine(shippingAddress))}</p>
-        <p>Mobile: ${escapeHtml(shippingAddress?.mobileNumber || order.user?.phoneNumber || "-")}</p>
-      </div>
-    </section>
+      <section class="address-grid">
+        <div class="address-card">
+          <div class="address-title">Billed to</div>
+          <div class="address-body">
+            <strong>${escapeHtml(customerName)}</strong>
+            <p>${escapeHtml(getAddressLine(billingAddress))}</p>
+            <p>Mob - ${escapeHtml(billingAddress?.mobileNumber || shippingAddress?.mobileNumber || order.user?.phoneNumber || "-")}</p>
+          </div>
+        </div>
+        <div class="address-card">
+          <div class="address-title">Shipped to</div>
+          <div class="address-body">
+            <strong>${escapeHtml(shippingAddress?.fullName || customerName)}</strong>
+            <p>${escapeHtml(getAddressLine(shippingAddress))}</p>
+            <p>Mob - ${escapeHtml(shippingAddress?.mobileNumber || order.user?.phoneNumber || "-")}</p>
+          </div>
+        </div>
+      </section>
 
-    <section class="section">
-      <table>
-        <thead><tr><th>Product</th><th>Pack</th><th>Qty</th><th>Amount</th></tr></thead>
-        <tbody>
-          ${
-            items
-              .map(
-                (item, index) => `<tr>
-                  <td><strong>${escapeHtml(getItemName(item, index))}</strong><br><span class="muted">${escapeHtml(item.category || "Product")}</span></td>
-                  <td>${escapeHtml(item.selectedQuantity ? `${item.selectedQuantity} capsules` : "-")}</td>
-                  <td>${escapeHtml(item.quantity || 0)}</td>
-                  <td>${escapeHtml(formatCurrency(item.finalPrice))}</td>
-                </tr>`,
-              )
-              .join("") || '<tr><td colspan="4">No order items available.</td></tr>'
-          }
-        </tbody>
-      </table>
-    </section>
+      <section class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Pack</th>
+              <th>Qty</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              items
+                .map(
+                  (item, index) => `<tr>
+                    <td>${escapeHtml(getItemName(item, index))}</td>
+                    <td>${escapeHtml(item.selectedQuantity ? `${item.selectedQuantity} Capsules` : "-")}</td>
+                    <td>${escapeHtml(item.quantity || 0)}</td>
+                    <td>${escapeHtml(formatAmount(item.finalPrice))}</td>
+                  </tr>`,
+                )
+                .join("") || '<tr><td colspan="4">No order items available.</td></tr>'
+            }
+          </tbody>
+        </table>
+        <div class="divider"></div>
+      </section>
 
-    <section class="section">
-      <div class="total-box">
-        <div class="row"><span>Subtotal</span><strong>${escapeHtml(formatCurrency(order.subtotal))}</strong></div>
-        <div class="row"><span>Product discount</span><strong>- ${escapeHtml(formatCurrency(order.productDiscountTotal))}</strong></div>
-        <div class="row"><span>Promo discount ${escapeHtml(order.promoCode ? `(${order.promoCode})` : "")}</span><strong>- ${escapeHtml(formatCurrency(order.promoDiscountAmount))}</strong></div>
-        <div class="row"><span>GST</span><strong>${escapeHtml(formatCurrency(order.gst))}</strong></div>
-        <div class="row"><span>Shipping</span><strong>${escapeHtml(formatCurrency(order.shippingCharges))}</strong></div>
-        <div class="row grand"><span>Total</span><strong>${escapeHtml(formatCurrency(order.totalAmount))}</strong></div>
-        <p class="muted">Payment: ${escapeHtml(order.paymentMethod || "COD")} ${order.paymentStatus ? `(${escapeHtml(order.paymentStatus)})` : ""}</p>
-      </div>
-    </section>
+      <section class="bottom">
+        <div>
+          <div class="payment-method">
+            <em>Payment Method:</em>
+            <strong>&#128666;&nbsp; ${escapeHtml(getPaymentLabel(paymentMethod))}</strong>
+          </div>
+          <p class="thanks">Thank you for your business</p>
+        </div>
+        <div class="totals">
+          <div class="total-row"><span>Sub Total</span><span>${escapeHtml(formatAmount(order.subtotal))}</span></div>
+          <div class="total-row"><span>Product discount</span><span>- ${escapeHtml(formatCurrency(order.productDiscountTotal))}</span></div>
+          <div class="total-row"><span>Promo discount</span><span>- ${escapeHtml(formatCurrency(order.promoDiscountAmount))}</span></div>
+          <div class="total-row"><span>GST</span><span>${escapeHtml(formatCurrency(order.gst))}</span></div>
+          <div class="total-row"><span>Shipping</span><span>${escapeHtml(formatCurrency(order.shippingCharges))}</span></div>
+          <div class="total-rule"></div>
+          <div class="total-row grand"><span>Total</span><span>${escapeHtml(formatCurrency(order.totalAmount))}</span></div>
+          <p class="payment-under-total">Payment: ${escapeHtml(paymentMethod)} (${escapeHtml(paymentStatus)})</p>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <span class="footer-item"><span class="footer-icon">&#9993;</span> Info@medha.care</span>
+      <span class="footer-item"><span class="footer-icon">&#9678;</span> www.medha.care</span>
+    </footer>
   </main>
 </body>
 </html>`;
@@ -205,7 +284,7 @@ const getShippingLabelHtml = (order) => {
   <main class="label">
     <section class="top">
       <div class="brand-wrap">
-        <img class="logo" src="${escapeHtml(LOGO_SRC)}" alt="Medha Botanics logo" />
+        <img class="logo" src="${escapeHtml(medhaLogoUrl)}" alt="Medha Botanics logo" />
         <div>
           <div class="brand">Medha Botanics</div>
           <p>MedhaBotanics Service Desk</p>
@@ -237,9 +316,10 @@ const getShippingLabelHtml = (order) => {
 </html>`;
 };
 
-export const downloadOrderInvoice = (order) => {
+export const downloadOrderInvoice = async (order) => {
   const orderId = safeFileName(order.orderId || order._id || "order");
-  const blob = new Blob([getInvoiceHtml(order)], { type: "text/html;charset=utf-8" });
+  const logoSrc = await getImageDataUri(medhaLogoUrl);
+  const blob = new Blob([getInvoiceHtml(order, logoSrc)], { type: "text/html;charset=utf-8" });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
 
