@@ -1,14 +1,17 @@
 import { useState } from "react";
 import {
   FiEdit2,
+  FiDownload,
   FiMapPin,
   FiPackage,
   FiPlus,
+  FiPrinter,
   FiRefreshCw,
   FiTrash2,
   FiUser,
   FiX,
 } from "react-icons/fi";
+import { downloadOrderInvoice, printShippingLabel } from "../lib/orderDocuments";
 
 const ORDER_STATUSES = [
   "pending",
@@ -769,6 +772,11 @@ export function OrdersPanel({
             const shippingAddress = resolveAddress(order.shippingDetails);
             const billingAddress = resolveAddress(order.billingAddress);
             const isArchived = Boolean(order.isDeleted);
+            const documentOrder = {
+              ...order,
+              shippingDetails: shippingAddress || order.shippingDetails,
+              billingAddress: billingAddress || order.billingAddress,
+            };
 
             return (
               <article key={order._id} className="order-card">
@@ -936,6 +944,22 @@ export function OrdersPanel({
                     />
                   </label>
                   <div className="order-action-row">
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => downloadOrderInvoice(documentOrder)}
+                    >
+                      <FiDownload className="button-icon" />
+                      Download invoice
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => printShippingLabel(documentOrder)}
+                    >
+                      <FiPrinter className="button-icon" />
+                      Print label
+                    </button>
                     <button
                       type="button"
                       className="ghost-button"
