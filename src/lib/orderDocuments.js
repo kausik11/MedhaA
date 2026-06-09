@@ -1,5 +1,6 @@
 import medhaLogoUrl from "../assets/MDB_logo.png";
 import invoiceWatermarkUrl from "../assets/Asset 25@10x.png";
+import html2pdf from "html2pdf.js";
 
 const SERVICE_DESK_ADDRESS =
   "49/5, SH 1, Dunlop, Nagendra Nagar, Beehive Garden, Belghoria, Kolkata, WB-700056";
@@ -64,6 +65,116 @@ const getImageDataUri = async (src) => {
   }
 };
 
+const waitForFrameLoad = (frame) =>
+  new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error("Invoice preview timed out"));
+    }, 8000);
+
+    frame.onload = () => {
+      window.clearTimeout(timeout);
+      const frameDocument = frame.contentDocument;
+
+      if (!frameDocument) {
+        reject(new Error("Could not prepare invoice preview"));
+        return;
+      }
+
+      resolve(frameDocument);
+    };
+  });
+
+const waitForInvoiceAssets = async (documentToRender) => {
+  const imagePromises = Array.from(documentToRender.images).map((image) => {
+    if (image.complete) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      image.onload = () => resolve();
+      image.onerror = () => resolve();
+    });
+  });
+
+  await Promise.all(imagePromises);
+  await documentToRender.fonts?.ready;
+  await new Promise((resolve) => window.requestAnimationFrame(resolve));
+};
+
+const saveHtmlInvoiceAsPdf = async (html, filename) => {
+  const frame = document.createElement("iframe");
+
+  frame.style.position = "fixed";
+  frame.style.left = "-10000px";
+  frame.style.top = "0";
+  frame.style.width = "1100px";
+  frame.style.height = "1500px";
+  frame.style.border = "0";
+  frame.style.opacity = "0";
+  frame.style.pointerEvents = "none";
+  document.body.appendChild(frame);
+
+  try {
+    const frameLoaded = waitForFrameLoad(frame);
+    frame.srcdoc = html;
+    const frameDocument = await frameLoaded;
+
+    await waitForInvoiceAssets(frameDocument);
+
+    const invoiceElement = frameDocument.querySelector(".invoice") ?? frameDocument.body;
+    const printStyles = Array.from(frameDocument.head.querySelectorAll("style"))
+      .map((style) => style.textContent ?? "")
+      .join("\n");
+
+    if (printStyles) {
+      const inlineStyles = frameDocument.createElement("style");
+      inlineStyles.textContent = printStyles;
+      invoiceElement.prepend(inlineStyles);
+    }
+
+    await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
+    const invoiceRect = invoiceElement.getBoundingClientRect();
+    const pageWidth = 980;
+    const pageHeight = 1280;
+    const width = Math.ceil(Math.max(invoiceElement.scrollWidth, invoiceRect.width, pageWidth));
+    const height = Math.ceil(Math.max(invoiceElement.scrollHeight, invoiceRect.height, 1280));
+
+    frame.style.width = `${width}px`;
+    frame.style.height = `${height}px`;
+
+    await html2pdf()
+      .set({
+        margin: 0,
+        filename,
+        image: { type: "jpeg", quality: 0.98 },
+        pagebreak: {
+          mode: ["css", "legacy"],
+          avoid: [".footer", ".footer-item"],
+        },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          windowWidth: width,
+          windowHeight: height,
+          scrollX: 0,
+          scrollY: 0,
+        },
+        jsPDF: {
+          unit: "px",
+          format: [pageWidth, pageHeight],
+          orientation: "portrait",
+        },
+      })
+      .from(invoiceElement)
+      .save();
+  } finally {
+    frame.remove();
+  }
+};
+
 const getCustomerName = (order) => {
   const userName = [order.user?.firstName, order.user?.lastName].filter(Boolean).join(" ").trim();
   return order.shippingDetails?.fullName || userName || order.user?.email || "Customer";
@@ -109,8 +220,8 @@ const getInvoiceHtml = (order, logoSrc, watermarkSrc) => {
     :root { color: #070d22; font-family: Inter, Arial, sans-serif; }
     * { box-sizing: border-box; }
     body { margin: 0; background: #eef6ff; padding: 28px; }
-    .invoice { position: relative; max-width: 980px; min-height: 1280px; margin: 0 auto; overflow: hidden; border-radius: 0 0 20px 20px; background: #fff; box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12); }
-    .content { position: relative; z-index: 1; padding: 58px 74px 150px; }
+    .invoice { position: relative; display: flex; width: 980px; max-width: 980px; min-height: 1280px; margin: 0 auto; overflow: visible; flex-direction: column; border-radius: 0 0 20px 20px; background: #fff; box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12); }
+    .content { position: relative; z-index: 1; flex: 1 0 auto; padding: 58px 74px 48px; }
     .watermark { position: absolute; left: 50%; top: 50%; width: min(520px, 62%); opacity: .055; transform: translate(-50%, -34%); }
     .watermark img { display: block; width: 100%; height: auto; object-fit: contain; }
     .top { display: grid; grid-template-columns: minmax(0, .95fr) minmax(300px, .78fr); gap: 64px; align-items: start; }
@@ -148,10 +259,12 @@ const getInvoiceHtml = (order, logoSrc, watermarkSrc) => {
     .total-rule { margin: 16px 0 12px; height: 3px; border-radius: 99px; background: #2f73e8; }
     .grand { font-size: 22px; font-weight: 500; }
     .payment-under-total { margin-top: 12px; text-align: right; color: #111827; font-size: 16px; font-weight: 400; }
-    .footer { position: absolute; inset-inline: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 70px; background: #2f73e8; padding: 34px 40px; color: #fff; font-size: 18px; font-weight: 400; }
-    .footer-item { display: inline-flex; align-items: center; gap: 14px; line-height: 1; }
-    .footer-icon { display: inline-grid; width: 42px; height: 42px; place-items: center; flex: 0 0 42px; border: 1px solid rgba(255,255,255,.9); border-radius: 999px; font-size: 20px; line-height: 1; }
-    @media print { body { background: #fff; padding: 0; } .invoice { box-shadow: none; max-width: none; min-height: 100vh; } }
+    .footer { position: relative; z-index: 1; display: flex; min-height: 110px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 70px; margin-top: auto; break-inside: avoid; page-break-inside: avoid; background: #2f73e8; padding: 30px 40px; color: #fff; font-size: 18px; font-weight: 400; }
+    .footer-item { display: inline-grid; grid-template-columns: 42px auto; align-items: center; gap: 14px; line-height: 1; }
+    .footer-text { display: block; line-height: 42px; }
+    .footer-icon { display: inline-flex; width: 42px; height: 42px; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.9); border-radius: 999px; line-height: 0; }
+    .footer-icon svg { display: block; width: 22px; height: 22px; stroke: currentColor; }
+    @media print { body { background: #fff; padding: 0; } .invoice { box-shadow: none; max-width: none; min-height: 1280px; } .footer { break-inside: avoid; page-break-inside: avoid; } }
     @media (max-width: 760px) { body { padding: 12px; } .content { padding: 34px 24px 170px; } .top, .address-grid, .bottom { grid-template-columns: 1fr; gap: 28px; } .invoice-card { margin-left: 0; } .address-card:last-child .address-title, .address-card:last-child .address-body { text-align: left; } .footer { flex-direction: column; gap: 14px; align-items: center; font-size: 16px; } table { font-size: 15px; } th, td { padding: 14px 8px; font-size: 15px; } }
   </style>
 </head>
@@ -249,8 +362,26 @@ const getInvoiceHtml = (order, logoSrc, watermarkSrc) => {
     </div>
 
     <footer class="footer">
-      <span class="footer-item"><span class="footer-icon">&#9993;</span> Info@medha.care</span>
-      <span class="footer-item"><span class="footer-icon">&#9678;</span> www.medha.care</span>
+      <span class="footer-item">
+        <span class="footer-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6h16v12H4z" />
+            <path d="m4 7 8 6 8-6" />
+          </svg>
+        </span>
+        <span class="footer-text">Info@medha.care</span>
+      </span>
+      <span class="footer-item">
+        <span class="footer-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8" />
+            <path d="M4 12h16" />
+            <path d="M12 4c2.2 2.4 3.2 5.1 3.2 8s-1 5.6-3.2 8" />
+            <path d="M12 4c-2.2 2.4-3.2 5.1-3.2 8s1 5.6 3.2 8" />
+          </svg>
+        </span>
+        <span class="footer-text">www.medha.care</span>
+      </span>
     </footer>
   </main>
 </body>
@@ -326,18 +457,10 @@ export const downloadOrderInvoice = async (order) => {
     getImageDataUri(medhaLogoUrl),
     getImageDataUri(invoiceWatermarkUrl),
   ]);
-  const blob = new Blob([getInvoiceHtml(order, logoSrc, watermarkSrc)], {
-    type: "text/html;charset=utf-8",
-  });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = `invoice-${orderId}.html`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  await saveHtmlInvoiceAsPdf(
+    getInvoiceHtml(order, logoSrc, watermarkSrc),
+    `invoice-${orderId}.pdf`,
+  );
 };
 
 export const printShippingLabel = (order) => {
